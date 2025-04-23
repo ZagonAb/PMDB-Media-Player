@@ -1,0 +1,3 @@
+.venv/
+PMDB_MP.egg-info/
+PMDB_MP/__pycache__/
