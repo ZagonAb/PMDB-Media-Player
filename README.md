@@ -1,5 +1,5 @@
 ## PMDB-Media-Player
 - Pegasus Movie Data Base Media Player
 
-![screenshot](https://github.com/ZagonAb/PMDB-Media-Player/blob/7031e9a75364d7daed1f4858b3ec2248a7706b0a/.meta/screenshots/screen.png)
-![screenshot1](https://github.com/ZagonAb/PMDB-Media-Player/blob/7031e9a75364d7daed1f4858b3ec2248a7706b0a/.meta/screenshots/screen1.png)
+![screenshot](https://github.com/ZagonAb/PMDB-Media-Player/blob/814f388e7f6623b22ca554a294d7e936524c009e/.meta/screenshots/screen.png)
+![screenshot1](https://github.com/ZagonAb/PMDB-Media-Player/blob/814f388e7f6623b22ca554a294d7e936524c009e/.meta/screenshots/screen1.png)
