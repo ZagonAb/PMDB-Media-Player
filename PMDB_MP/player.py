@@ -3,6 +3,7 @@ import sys
 import vlc
 import time
 import tkinter as tk
+from tkinter import ttk
 import customtkinter as ctk
 from threading import Thread
 from PMDB_MP.controls import PlayerControls
@@ -37,12 +38,9 @@ class VideoPlayer:
         self.control_frame = ctk.CTkFrame(self.root)
         self.control_frame.pack(fill=tk.X, padx=0, pady=0)
 
-        # Configurar el panel de control para que sea semitransparente en pantalla completa
-
-
         # Marco para la barra de progreso
         self.progress_frame = ctk.CTkFrame(self.control_frame)
-        self.progress_frame.pack(fill=tk.X, padx=10, pady=(10, 5))
+        self.progress_frame.pack(fill=tk.X, padx=10, pady=(5, 0))
 
         # Componente de barra de progreso personalizada
         self.progress = ProgressBar(self.progress_frame)
@@ -51,7 +49,7 @@ class VideoPlayer:
 
         # Marco para los botones
         self.button_frame = ctk.CTkFrame(self.control_frame)
-        self.button_frame.pack(fill=tk.X, padx=10, pady=10)
+        self.button_frame.pack(fill=tk.X, padx=10, pady=(0, 5))
 
         # Añadir estado de pantalla completa
         self.is_fullscreen = False
@@ -177,12 +175,13 @@ class VideoPlayer:
             bg_color=self.bg_color
         )
 
-        # Mantener visible la barra de progreso
-        self.progress.progress_bar.configure(
-            fg_color=self.empty_bar_color,  # Color más oscuro para la barra vacía
-            progress_color=self.progress_color,  # Color de la barra llena
+        self.progress.progress_slider.configure(
+            fg_color=self.empty_bar_color,
+            progress_color=self.progress_color,
+            button_color="#b1bacc",
+            button_hover_color="#b1bacc",
             border_width=0,
-            corner_radius=5  # Un pequeño radio para ver mejor la barra
+            corner_radius=5
         )
 
         # Configurar la etiqueta de tiempo
@@ -672,47 +671,111 @@ class VideoPlayer:
             self.embedded_subtitles = []
 
     def _show_subtitle_menu(self):
-        """Muestra el menú de selección de subtítulos embebidos"""
-        if not self.embedded_subtitles:
-            print("[SUBTITLE_MENU] No hay subtítulos embebidos disponibles")
+        """Muestra un menú moderno de selección de subtítulos embebidos con posición ajustada"""
+        # Si el menú ya está abierto, lo cerramos
+        if hasattr(self, 'subtitle_menu') and self.subtitle_menu.winfo_exists():
+            self.subtitle_menu.destroy()
             return
 
-        print(f"[SUBTITLE_MENU] Mostrando menú para {len(self.embedded_subtitles)} subtítulos")
+        if not self.embedded_subtitles:
+            return
 
-        # Crear menú emergente
-        self.subtitle_menu = tk.Menu(self.root, tearoff=0, bg="#202227", fg="white",
-                                activebackground="#50555f", activeforeground="white")
+        # Crear ventana emergente
+        self.subtitle_menu = tk.Toplevel(self.root)
+        self.subtitle_menu.overrideredirect(True)
+        self.subtitle_menu.configure(bg="#202227")
+        self.subtitle_menu.attributes('-topmost', True)
 
-        # Opción para desactivar subtítulos
-        self.subtitle_menu.add_command(
-            label="Desactivar subtítulos",
-            command=lambda: self._select_embedded_subtitle(-1),
-            font=("Helvetica", 10)
-        )
+        # Configurar estilos
+        style = ttk.Style()
+        style.configure("Subtitle.TFrame", background="#202227")
+        style.configure("Subtitle.TLabel",
+                    background="#202227",
+                    foreground="white",
+                    font=("Segoe UI", 10))
+        style.configure("Subtitle.TButton",
+                    background="#303338",
+                    foreground="white",
+                    font=("Segoe UI", 10),
+                    padding=5)
+        style.map("Subtitle.TButton",
+                background=[("active", "#404348")])
+
+        # Marco principal más compacto
+        menu_frame = ttk.Frame(self.subtitle_menu, style="Subtitle.TFrame")
+        menu_frame.pack(padx=0, pady=0)
+
+        # Título del menú
+        title_label = ttk.Label(menu_frame,
+                            text="Seleccionar subtítulo",
+                            style="Subtitle.TLabel")
+        title_label.pack(fill='x', padx=10, pady=(6, 3))  # Padding reducido
 
         # Separador
-        self.subtitle_menu.add_separator()
+        ttk.Separator(menu_frame, orient='horizontal').pack(fill='x', padx=5, pady=2)
 
-        # Añadir cada track de subtítulos
+        # Función para cerrar el menú
+        def close_menu_and_execute(command=None):
+            if command:
+                command()
+            self.subtitle_menu.destroy()
+
+        # Botón para desactivar subtítulos
+        disable_btn = ttk.Button(menu_frame,
+                            text="Desactivar subtítulos",
+                            style="Subtitle.TButton",
+                            command=lambda: close_menu_and_execute(
+                                lambda: self._select_embedded_subtitle(-1)))
+        disable_btn.pack(fill='x', padx=5, pady=2)
+
+        # Separador
+        ttk.Separator(menu_frame, orient='horizontal').pack(fill='x', padx=5, pady=2)
+
+        # Botones para cada track
         for sub in self.embedded_subtitles:
-            self.subtitle_menu.add_command(
-                label=f"Track {sub['id']}: {sub['name']}",
-                command=lambda id=sub['id']: self._select_embedded_subtitle(id),
-                font=("Helvetica", 10)
-            )
+            btn = ttk.Button(menu_frame,
+                            text=f"Track {sub['id']}: {sub['name']}",
+                            style="Subtitle.TButton",
+                            command=lambda id=sub['id']: close_menu_and_execute(
+                                lambda: self._select_embedded_subtitle(id)))
+            btn.pack(fill='x', padx=5, pady=2)
 
-        try:
-            # Obtener posición del botón
-            btn = self.controls.embedded_sub_button
-            x = btn.winfo_rootx()
-            y = btn.winfo_rooty() + btn.winfo_height()
+        # Calcular dimensiones
+        item_count = len(self.embedded_subtitles) + 2
+        item_height = 30  # Más compacto
+        menu_height = item_count * item_height + 15  # Altura total reducida
+        menu_width = 200  # Ancho más ajustado
 
-            # Mostrar menú
-            self.subtitle_menu.tk_popup(x, y)
+        # POSICIONAMIENTO AJUSTADO (más arriba y a la derecha)
+        btn = self.controls.embedded_sub_button
 
-            print("[SUBTITLE_MENU] Menú mostrado correctamente")
-        except Exception as e:
-            print(f"[SUBTITLE_MENU] Error al mostrar menú: {str(e)}")
+        btn_right_edge = btn.winfo_rootx() + btn.winfo_width()
+        screen_right_edge = self.root.winfo_screenwidth()
+        max_right = screen_right_edge - menu_width - 20  # 20px de margen del borde
+
+        x = min(btn_right_edge - 40, max_right)  # Usa 200px desde el botón o el máximo posible
+
+        # Calcular posición Y (más arriba)
+        y = btn.winfo_rooty() - menu_height - 40  # 50px arriba del bo
+
+
+        # Asegurar que no salga de la pantalla
+        if y < 0:
+            y = 10
+
+        self.subtitle_menu.geometry(f"{menu_width}x{menu_height}+{int(x)}+{int(y)}")
+        self.subtitle_menu.attributes('-alpha', 0.98)
+
+        # Eventos para cerrar
+        def on_click_outside(event):
+            if (event.widget != self.subtitle_menu and
+                not self.subtitle_menu.winfo_containing(event.x_root, event.y_root)):
+                self.subtitle_menu.destroy()
+
+        self.root.bind("<Button-1>", on_click_outside)
+        self.subtitle_menu.bind("<Escape>", lambda e: self.subtitle_menu.destroy())
+        self.subtitle_menu.protocol("WM_DELETE_WINDOW", self.subtitle_menu.destroy)
+        self.subtitle_menu.focus_force()
 
     def _select_embedded_subtitle(self, sub_id):
         """Selecciona un subtítulo embebido específico"""

@@ -45,60 +45,60 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="" if self.backward_icon else "⏪ -10s",
             image=self.backward_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=rewind_cmd,
             compound="top"  # Para alinear imagen y texto si ambos están presentes
         )
-        self.rewind_button.grid(row=0, column=1, padx=5, pady=5)
+        self.rewind_button.grid(row=0, column=1, padx=5, pady=2)
 
         # Botón Play/Pause
         self.play_pause_button = ctk.CTkButton(
             self,
             text="",
             image=self.pause_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=play_pause_cmd,
             compound="top"
         )
-        self.play_pause_button.grid(row=0, column=2, padx=5, pady=5)
+        self.play_pause_button.grid(row=0, column=2, padx=5, pady=2)
 
         # Botón Cerrar
         self.close_button = ctk.CTkButton(
             self,
             text="" if self.close_icon else "Cerrar",
             image=self.close_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=close_cmd,
             compound="top"
         )
-        self.close_button.grid(row=0, column=3, padx=5, pady=5)
+        self.close_button.grid(row=0, column=3, padx=5, pady=2)
 
         # Botón Avanzar 10s
         self.forward_button = ctk.CTkButton(
             self,
             text="" if self.forward_icon else "+10s ⏩",
             image=self.forward_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=forward_cmd,
             compound="top"
         )
-        self.forward_button.grid(row=0, column=4, padx=5, pady=5)
+        self.forward_button.grid(row=0, column=4, padx=5, pady=2)
 
         # Botón Mute
         self.mute_button = ctk.CTkButton(
             self,
             text="" if (self.volume_icon and self.mute_icon) else "🔊",
             image=self.volume_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=self._handle_mute_click,
             compound="top"
         )
-        self.mute_button.grid(row=0, column=5, padx=(5, 0), pady=5)
+        self.mute_button.grid(row=0, column=5, padx=(5, 0), pady=2)
 
         # Barra de Volumen
         self.volume_slider = ctk.CTkSlider(
@@ -116,35 +116,35 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="",
             image=self.fullscreen_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=self._handle_fullscreen_click
         )
-        self.fullscreen_button.grid(row=0, column=7, padx=5, pady=5)
+        self.fullscreen_button.grid(row=0, column=7, padx=5, pady=2)
 
         # Botón Subtítulos (nuevo)
         self.subtitle_button = ctk.CTkButton(
             self,
             text="",
             image=self.subtitle_off_icon,  # Icono "off" inicial
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=toggle_subtitle_cmd if toggle_subtitle_cmd else None,
             state="normal" if toggle_subtitle_cmd else "disabled"
         )
-        self.subtitle_button.grid(row=0, column=8, padx=5, pady=5)
+        self.subtitle_button.grid(row=0, column=8, padx=5, pady=2)
 
         # Botón Subtítulos Embebidos (nuevo, columna 9)
         self.embedded_sub_button = ctk.CTkButton(
             self,
             text="",
             image=self.embedded_sub_icon,
-            width=40,
-            height=40,
+            width=30,
+            height=30,
             command=show_subtitle_menu_cmd if show_subtitle_menu_cmd else None,
             state="disabled"
         )
-        self.embedded_sub_button.grid(row=0, column=9, padx=5, pady=5)
+        self.embedded_sub_button.grid(row=0, column=9, padx=5, pady=2)
 
         # Variables para subtítulos embebidos
         self.embedded_subtitles_available = False
