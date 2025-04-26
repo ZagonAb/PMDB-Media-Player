@@ -2,6 +2,7 @@ import tkinter as tk
 import customtkinter as ctk
 from PIL import Image
 import os
+import sys
 
 class PlayerControls(ctk.CTkFrame):
     def __init__(self, master, play_pause_cmd, close_cmd, rewind_cmd, forward_cmd, toggle_mute_cmd, toggle_fullscreen_cmd, toggle_subtitle_cmd=None, show_subtitle_menu_cmd=None, **kwargs):
@@ -234,18 +235,33 @@ class PlayerControls(ctk.CTkFrame):
             self.mute_button.configure(text="🔇" if self.is_muted else "🔊")
 
     def _load_icon(self, icon_name):
-        """Carga iconos PNG con ruta absoluta"""
-        try:
-            icon_path = os.path.join(self.base_path, "assets", "icons", f"{icon_name}.png")
-            if os.path.exists(icon_path):
-                print(f"Cargando icono desde: {icon_path}")  # Debug
-                return ctk.CTkImage(Image.open(icon_path), size=(24, 24))
-            else:
-                print(f"Error: Archivo no encontrado en {icon_path}")
-                return None
-        except Exception as e:
-            print(f"Error cargando icono {icon_name}: {str(e)}")
-            return None
+        base_paths = [
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # PMDB_MP/
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            os.path.dirname(sys.executable),
+            getattr(sys, '_MEIPASS', '')
+        ]
+
+        file_names = [
+            f"{icon_name}.png",
+            f"{icon_name}.ico",
+        ]
+
+        for base in base_paths:
+            if not base:
+                continue
+
+            for file in file_names:
+                icon_path = os.path.join(base, "assets", "icons", file)
+                try:
+                    if os.path.exists(icon_path):
+                        print(f"Cargando icono desde: {icon_path}")
+                        return ctk.CTkImage(Image.open(icon_path), size=(24, 24))
+                except Exception as e:
+                    print(f"Error cargando {icon_path}: {str(e)}")
+
+        print(f"Icono no encontrado: {icon_name}. Usando texto alternativo.")
+        return None
 
     def update_mute_button(self, is_muted):
         if hasattr(self, 'volume_icon') and self.volume_icon:

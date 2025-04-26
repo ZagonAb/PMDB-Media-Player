@@ -4,10 +4,13 @@ import vlc
 import time
 import tkinter as tk
 from tkinter import ttk
+import tkinter.font as tkfont
 import customtkinter as ctk
 from threading import Thread
 from PMDB_MP.controls import PlayerControls
 from PMDB_MP.progress import ProgressBar
+from PMDB_MP.pegasus_utils import PegasusUtils
+
 
 class VideoPlayer:
     def __init__(self, video_path):
@@ -15,6 +18,7 @@ class VideoPlayer:
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        video_name = os.path.basename(video_path)
         # Configurar colores personalizados para la aplicación
         self.bg_color = "#202227"  # Color de fondo unificado
         self.bg_color2 = "black"
@@ -24,8 +28,25 @@ class VideoPlayer:
 
         # Crear ventana principal
         self.root = ctk.CTk()
-        self.root.title("PMDB Media Player")
+        self.root.title(f"PMDB Media Player - {video_name}")
         self.root.geometry("1280x720.")
+        self.root.minsize(600,400)
+
+        # ===== NUEVO CÓDIGO PARA EL ICONO =====
+        try:
+            base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            icon_path = os.path.join(base_path, "assets", "icons", "pmdbmp.png")
+
+            if os.path.exists(icon_path):
+                if sys.platform == "win32":
+                    self.root.iconbitmap(icon_path)
+                else:
+                    icon = tk.PhotoImage(file=icon_path)
+                    self.root.iconphoto(True, icon)
+        except Exception as e:
+            print(f"No se pudo cargar el icono: {str(e)}")
+        # ===== FIN DEL NUEVO CÓDIGO =====
+
         self.root.update() # Forzar actualización
 
         self.controls_visible = True
@@ -129,12 +150,24 @@ class VideoPlayer:
         self.media_ready = False
         self.total_time = 0
 
-        # Configurar eventos de teclado/ventana
         self.root.protocol("WM_DELETE_WINDOW", self.close_player)
-        self.root.bind("<Escape>", lambda e: self._exit_fullscreen_or_close())
-        self.root.bind("<space>", lambda e: self.toggle_play_pause())
-        self.root.bind("<F11>", lambda e: self._toggle_fullscreen())  # Tecla F11 para pantalla completa
+        self.root.bind("<Escape>", self._exit_fullscreen_or_close)
+        self.root.bind("<F11>", lambda e: self._toggle_fullscreen())
+        self.root.bind("<Left>", self._handle_rewind)
+        self.root.bind("<Right>", self._handle_forward)
+        self.root.bind("<space>", self._handle_play_pause)
+        self.root.bind("<Up>", self._handle_volume_up)
+        self.root.bind("<Down>", self._handle_volume_down)
 
+        # Duplicar los bindings en el video_frame también
+        self.video_frame.bind("<Left>", self._handle_rewind)
+        self.video_frame.bind("<Right>", self._handle_forward)
+        self.video_frame.bind("<space>", self._handle_play_pause)
+        self.video_frame.bind("<Up>", self._handle_volume_up)
+        self.video_frame.bind("<Down>", self._handle_volume_down)
+
+        self.video_frame.bind("<Button-1>", lambda e: self.video_frame.focus_set())
+        self.video_frame.bind("<Double-Button-1>", lambda e: self._toggle_fullscreen())
         # Iniciar reproductor en hilo separado
         self._start_player_thread()
         self.root.after(1000, self._refresh_duration)  # Comienza después de 1 segundo
@@ -142,7 +175,7 @@ class VideoPlayer:
         # Iniciar actualización de UI
         self.root.after(100, self.update_ui)
         self._init_fullscreen_controls()
-        self.player.audio_set_volume(70)  # 70% de volumen por defecto
+        self.player.audio_set_volume(50)
 
         # Aplicar estilo unificado desde el inicio (antes del primer frame)
         self.root.update()  # Asegurar que todos los widgets estén creados
@@ -237,6 +270,41 @@ class VideoPlayer:
             # Intentar desactivar los subtítulos después de 1 segundo (cuando todo esté cargado)
             self.root.after(1000, self._ensure_subtitles_off)
 
+        # Inicializar utilidades Pegasus
+        self.pegasus_utils = PegasusUtils()
+
+        # Obtener nombre del video (sin extensión)
+        self.video_name = os.path.splitext(os.path.basename(video_path))[0]
+        # Configurar eventos adicionales
+        self._setup_save_events()
+
+        # Cargar posición guardada si existe
+        self.saved_position = self.pegasus_utils.get_video_position(self.video_name)
+        if self.saved_position > 0:
+            print(f"Posición guardada encontrada: {self.saved_position}ms")
+            # Cambiar esto:
+            # self.root.after(1000, self._load_saved_position)  # Línea problemática
+            # Por esto:
+            self.root.after(1000, lambda: self._seek_to_saved_position())  # Nueva línea
+
+        def _load_saved_position(self):
+            """Carga la posición guardada del video"""
+            if self.saved_position > 0 and self.media_ready:
+                self.player.set_time(self.saved_position)
+                self.update_ui()
+
+        def close_player(self):
+            """Cierra el reproductor guardando la posición actual"""
+            if self.is_playing:
+                current_position = self.player.get_time()
+                if current_position > 0:
+                    self.pegasus_utils.save_video_position(self.video_name, current_position)
+
+            self.player.stop()
+            self.is_playing = False
+            self.root.quit()
+            self.root.destroy()
+
     def _ensure_subtitles_off(self):
         """Asegura que los subtítulos estén desactivados"""
         print("[ENSURE_OFF] Comprobando estado de subtítulos")
@@ -311,6 +379,24 @@ class VideoPlayer:
             enabled=self.subtitle_enabled
         )
 
+    def _increase_volume(self):
+        """Aumenta el volumen en 5%"""
+        current_vol = self.player.audio_get_volume()
+        new_vol = min(100, current_vol + 5)
+        self.player.audio_set_volume(new_vol)
+        self.controls.volume_slider.set(new_vol)
+        if self.controls.is_muted and new_vol > 0:
+            self._toggle_mute()  # Desmutea si estaba muteado
+
+    def _decrease_volume(self):
+        """Disminuye el volumen en 5%"""
+        current_vol = self.player.audio_get_volume()
+        new_vol = max(0, current_vol - 5)
+        self.player.audio_set_volume(new_vol)
+        self.controls.volume_slider.set(new_vol)
+        if new_vol == 0 and not self.controls.is_muted:
+            self._toggle_mute()  # Mutea si llega a 0
+
     def _toggle_fullscreen(self):
         """Alterna entre modo pantalla completa y normal"""
         if self.is_fullscreen:
@@ -376,7 +462,7 @@ class VideoPlayer:
         )
 
         # IMPORTANTE: Mantener visible la barra de progreso
-        self.progress.progress_bar.configure(
+        self.progress.progress_slider.configure(
             fg_color="#383838",  # Color más oscuro para la barra vacía
             progress_color="#50555f",  # Color de la barra llena
             border_width=0,
@@ -445,6 +531,7 @@ class VideoPlayer:
 
         # Mantener el foco en el área de video
         self.video_frame.focus_set()
+        self.root.after(100, lambda: self.video_frame.focus_force())
 
     def _exit_fullscreen(self):
         """Restaura la interfaz a modo normal manteniendo los colores unificados"""
@@ -489,7 +576,7 @@ class VideoPlayer:
         )
 
         # Mantener visible la barra de progreso
-        self.progress.progress_bar.configure(
+        self.progress.progress_slider.configure(
             fg_color="#383838",  # Color más oscuro para la barra vacía
             progress_color="#50555f",  # Color de la barra llena
             border_width=0,
@@ -503,7 +590,6 @@ class VideoPlayer:
             text_color="white"
         )
 
-        # Configurar widgets dentro de PlayerControls
         self.controls.configure(
             fg_color="#202227",
             bg_color="#202227",
@@ -511,7 +597,6 @@ class VideoPlayer:
             border_width=0
         )
 
-        # Configurar todos los botones manteniendo su apariencia visible
         for widget in self.controls.winfo_children():
             if isinstance(widget, ctk.CTkButton):
                 try:
@@ -533,10 +618,9 @@ class VideoPlayer:
                 except Exception as e:
                     print(f"Error configurando widget: {e}")
 
-        # Configurar el slider de volumen específicamente
         try:
             self.controls.volume_slider.configure(
-                fg_color="#383838",  # Color más oscuro para la barra vacía
+                fg_color="#383838",
                 bg_color="#202227",
                 button_color="#50555f",
                 button_hover_color="#60656f",
@@ -545,11 +629,94 @@ class VideoPlayer:
         except Exception as e:
             print(f"Error configurando volumen: {e}")
 
+    def _exit_fullscreen_or_close(self, event=None):
+        if self.is_fullscreen:
+            self._toggle_fullscreen()
+        else:
+            self._confirm_exit()
+
+    def _confirm_exit(self):
+        was_playing = self.player.is_playing()
+        if was_playing:
+            self.player.pause()
+            self.is_playing = False
+            self.controls.update_play_pause_button(False)
+
+        # Crear ventana de diálogo
+        dialog = ctk.CTkToplevel(self.root)
+        dialog.title("Confirmar salida")
+        dialog.geometry("400x150")
+        dialog.transient(self.root)
+        dialog.grab_set()
+
+        def on_cancel():
+            dialog.destroy()
+            if was_playing:
+                self.player.play()
+                self.is_playing = True
+                self.controls.update_play_pause_button(True)
+
+        def on_exit():
+            dialog.destroy()
+            self._save_and_close()
+
+        # Frame principal
+        frame = ctk.CTkFrame(dialog)
+        frame.pack(padx=20, pady=20, fill='both', expand=True)
+
+        # Mensaje
+        label = ctk.CTkLabel(
+            frame,
+            text="¿Estás seguro que quieres salir del reproductor?\nSe guardará la posición actual.",
+            wraplength=350
+        )
+        label.pack(pady=10)
+
+        # Frame para botones
+        btn_frame = ctk.CTkFrame(frame)
+        btn_frame.pack(pady=10)
+
+        # Botón Cancelar
+        cancel_btn = ctk.CTkButton(
+            btn_frame,
+            text="Cancelar",
+            command=on_cancel
+        )
+        cancel_btn.pack(side='left', padx=10)
+
+        # Botón Salir
+        exit_btn = ctk.CTkButton(
+            btn_frame,
+            text="Salir",
+            command=on_exit,
+            fg_color="#d9534f",
+            hover_color="#c9302c"
+        )
+        exit_btn.pack(side='left', padx=10)
+
+        # Centrar diálogo
+        self._center_window(dialog)
+
+        # Manejar cierre de la ventana (ej. con la X)
+        dialog.protocol("WM_DELETE_WINDOW", on_cancel)
+
+    def _save_and_close(self):
+        """Guarda la posición y cierra el reproductor"""
+        self._save_position()
+        self.close_player()
+
+    def _center_window(self, window):
+        """Centra una ventana en la pantalla"""
+        window.update_idletasks()
+        width = window.winfo_width()
+        height = window.winfo_height()
+        x = (window.winfo_screenwidth() // 2) - (width // 2)
+        y = (window.winfo_screenheight() // 2) - (height // 2)
+        window.geometry(f'{width}x{height}+{x}+{y}')
 
     def _seek_video(self, position):
-        """Salta a una posición específica del video (position es 0-1)"""
+        """Salta a una posición y guarda"""
         if not self.media_ready:
-            # Intentar forzar el análisis si aún no está listo
             self.total_time = self.media.get_duration()
             self.media_ready = (self.total_time > 0)
 
@@ -557,8 +724,7 @@ class VideoPlayer:
             target_time = int(position * self.total_time)
             self.player.set_time(target_time)
             self.update_ui()
-        else:
-            print("Advertencia: El video aún no está listo para buscar.")
+            self._save_position_after_action()  # Guardar después de buscar
 
     def _refresh_duration(self):
         """Intenta obtener la duración del video manualmente"""
@@ -614,12 +780,16 @@ class VideoPlayer:
         # Desactivar subtítulos al inicio
         self.player.video_set_spu(-1)
         print(f"[START_PLAYER] Estado de subtítulos después de desactivar: {self.player.video_get_spu()}")
+        print(f"Estado inicial del reproductor: {self.player.get_state()}")
+
+        self.root.after(1000, lambda: self.video_frame.focus_set())
 
         # Eliminar la línea problemática: self.player.video_set_subtitle_delay(0)
         # También quitar el bloque try/except con video_set_spu_enabled
 
         self.player.play()
         self.is_playing = True
+        print(f"Estado después de play(): {self.player.get_state()}")
 
         # Esperar a que el video esté listo (solución previa)
         timeout = time.time() + 5
@@ -671,120 +841,168 @@ class VideoPlayer:
             self.embedded_subtitles = []
 
     def _show_subtitle_menu(self):
-        """Muestra un menú moderno de selección de subtítulos embebidos con posición ajustada"""
-        # Si el menú ya está abierto, lo cerramos
-        if hasattr(self, 'subtitle_menu') and self.subtitle_menu.winfo_exists():
-            self.subtitle_menu.destroy()
+        """Menú de subtítulos anclado al borde superior del contenedor de controles"""
+        # Cerrar si ya está abierto
+        if hasattr(self, 'subtitle_menu_frame') and self.subtitle_menu_frame.winfo_exists():
+            self.subtitle_menu_frame.destroy()
+            self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento
             return
 
         if not self.embedded_subtitles:
             return
 
-        # Crear ventana emergente
-        self.subtitle_menu = tk.Toplevel(self.root)
-        self.subtitle_menu.overrideredirect(True)
-        self.subtitle_menu.configure(bg="#202227")
-        self.subtitle_menu.attributes('-topmost', True)
+        # Configuración de estilos
+        bg_color = "#202227"
+        btn_color = "#303338"
+        text_color = "white"
+        hover_color = "#404348"
+        separator_color = "#50555f"
 
-        # Configurar estilos
-        style = ttk.Style()
-        style.configure("Subtitle.TFrame", background="#202227")
-        style.configure("Subtitle.TLabel",
-                    background="#202227",
-                    foreground="white",
-                    font=("Segoe UI", 10))
-        style.configure("Subtitle.TButton",
-                    background="#303338",
-                    foreground="white",
-                    font=("Segoe UI", 10),
-                    padding=5)
-        style.map("Subtitle.TButton",
-                background=[("active", "#404348")])
+        # Obtener posición del contenedor de controles (borde SUPERIOR)
+        container_top = self.control_frame.winfo_rooty() - self.root.winfo_rooty()
+        btn = self.controls.embedded_sub_button
+        btn_x = btn.winfo_rootx() - self.root.winfo_rootx()
 
-        # Marco principal más compacto
-        menu_frame = ttk.Frame(self.subtitle_menu, style="Subtitle.TFrame")
-        menu_frame.pack(padx=0, pady=0)
+        # Crear frame del menú
+        self.subtitle_menu_frame = ctk.CTkFrame(
+            self.root,
+            fg_color=bg_color,
+            border_width=1,             # Mantener el borde
+            border_color=separator_color,
+            corner_radius=0,            # ← Establecer radius en 0 para quitar los bordes redondeados
+            width=250
+        )
 
-        # Título del menú
-        title_label = ttk.Label(menu_frame,
-                            text="Seleccionar subtítulo",
-                            style="Subtitle.TLabel")
-        title_label.pack(fill='x', padx=10, pady=(6, 3))  # Padding reducido
+        # Frame interno para contenido
+        content_frame = ctk.CTkFrame(
+            self.subtitle_menu_frame,
+            fg_color=bg_color
+        )
+        content_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Título
+        title_label = ctk.CTkLabel(
+            content_frame,
+            text="Seleccionar subtítulo",
+            fg_color=bg_color,
+            text_color=text_color,
+            font=("Segoe UI", 12, "bold")
+        )
+        title_label.pack(padx=5, pady=(5, 3), fill='x')
 
         # Separador
-        ttk.Separator(menu_frame, orient='horizontal').pack(fill='x', padx=5, pady=2)
+        separator = ctk.CTkFrame(
+            content_frame,
+            height=1,
+            fg_color=separator_color
+        )
+        separator.pack(fill='x', pady=2)
 
-        # Función para cerrar el menú
-        def close_menu_and_execute(command=None):
-            if command:
-                command()
-            self.subtitle_menu.destroy()
+        # Función de cierre y selección
+        def select_and_close(sub_id):
+            self._select_embedded_subtitle(sub_id)
+            self.subtitle_menu_frame.destroy()
+            self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento al cerrar
 
         # Botón para desactivar subtítulos
-        disable_btn = ttk.Button(menu_frame,
-                            text="Desactivar subtítulos",
-                            style="Subtitle.TButton",
-                            command=lambda: close_menu_and_execute(
-                                lambda: self._select_embedded_subtitle(-1)))
+        disable_btn = ctk.CTkButton(
+            content_frame,
+            text="Desactivar subtítulos",
+            fg_color=btn_color,
+            text_color=text_color,
+            hover_color=hover_color,
+            command=lambda: select_and_close(-1)
+        )
         disable_btn.pack(fill='x', padx=5, pady=2)
 
         # Separador
-        ttk.Separator(menu_frame, orient='horizontal').pack(fill='x', padx=5, pady=2)
+        separator2 = ctk.CTkFrame(
+            content_frame,
+            height=1,
+            fg_color=separator_color
+        )
+        separator2.pack(fill='x', pady=2)
+
+        # Frame desplazable para tracks
+        scroll_frame = ctk.CTkScrollableFrame(
+            content_frame,
+            fg_color=bg_color,
+            height=150
+        )
+        scroll_frame.pack(fill='x', padx=5, pady=2)
 
         # Botones para cada track
         for sub in self.embedded_subtitles:
-            btn = ttk.Button(menu_frame,
-                            text=f"Track {sub['id']}: {sub['name']}",
-                            style="Subtitle.TButton",
-                            command=lambda id=sub['id']: close_menu_and_execute(
-                                lambda: self._select_embedded_subtitle(id)))
-            btn.pack(fill='x', padx=5, pady=2)
+            btn_text = f"Track {sub['id']}: {sub['name']}"
+            if len(btn_text) > 30:
+                btn_text = btn_text[:27] + "..."
 
-        # Calcular dimensiones
-        item_count = len(self.embedded_subtitles) + 2
-        item_height = 30  # Más compacto
-        menu_height = item_count * item_height + 15  # Altura total reducida
-        menu_width = 200  # Ancho más ajustado
+            sub_btn = ctk.CTkButton(
+                scroll_frame,
+                text=btn_text,
+                fg_color=btn_color,
+                text_color=text_color,
+                hover_color=hover_color,
+                anchor='w',
+                command=lambda id=sub['id']: select_and_close(id)
+            )
+            sub_btn.pack(fill='x', padx=0, pady=2)
 
-        # POSICIONAMIENTO AJUSTADO (más arriba y a la derecha)
-        btn = self.controls.embedded_sub_button
+        # Calcular altura después de crear los elementos
+        self.subtitle_menu_frame.update_idletasks()
+        menu_height = self.subtitle_menu_frame.winfo_reqheight()
 
-        btn_right_edge = btn.winfo_rootx() + btn.winfo_width()
-        screen_right_edge = self.root.winfo_screenwidth()
-        max_right = screen_right_edge - menu_width - 20  # 20px de margen del borde
+        # Posicionamiento (borde inferior del menú en el borde superior del contenedor)
+        menu_y = container_top - menu_height
 
-        x = min(btn_right_edge - 40, max_right)  # Usa 200px desde el botón o el máximo posible
+        # Ajustar si se sale por arriba
+        if menu_y < 0:
+            menu_y = 5
+            self.subtitle_menu_frame.configure(height=container_top - 10)
 
-        # Calcular posición Y (más arriba)
-        y = btn.winfo_rooty() - menu_height - 40  # 50px arriba del bo
+        # Posicionar el menú alineado horizontalmente con el botón
+        self.subtitle_menu_frame.place(
+            x=btn_x,
+            y=menu_y,
+            anchor="nw"
+        )
 
-
-        # Asegurar que no salga de la pantalla
-        if y < 0:
-            y = 10
-
-        self.subtitle_menu.geometry(f"{menu_width}x{menu_height}+{int(x)}+{int(y)}")
-        self.subtitle_menu.attributes('-alpha', 0.98)
-
-        # Eventos para cerrar
+        # Cerrar al hacer clic fuera
         def on_click_outside(event):
-            if (event.widget != self.subtitle_menu and
-                not self.subtitle_menu.winfo_containing(event.x_root, event.y_root)):
-                self.subtitle_menu.destroy()
+            if (hasattr(self, 'subtitle_menu_frame') and
+                self.subtitle_menu_frame.winfo_exists() and
+                not self.subtitle_menu_frame.winfo_containing(event.x, event.y)):
+                self.subtitle_menu_frame.destroy()
+                self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento
 
-        self.root.bind("<Button-1>", on_click_outside)
-        self.subtitle_menu.bind("<Escape>", lambda e: self.subtitle_menu.destroy())
-        self.subtitle_menu.protocol("WM_DELETE_WINDOW", self.subtitle_menu.destroy)
-        self.subtitle_menu.focus_force()
+        # Guardar el ID del binding para poder eliminar después
+        self.click_outside_id = self.root.bind("<Button-1>", on_click_outside)
+
+        # Cerrar al perder el foco y asegurar eliminación del binding
+        def on_focus_out(event):
+            if hasattr(self, 'subtitle_menu_frame') and self.subtitle_menu_frame.winfo_exists():
+                self.subtitle_menu_frame.destroy()
+                self.root.unbind("<Button-1>", self.click_outside_id)
+
+        self.subtitle_menu_frame.bind("<FocusOut>", on_focus_out)
+
+        # Enfocar el menú
+        self.subtitle_menu_frame.focus_set()
+
+
 
     def _select_embedded_subtitle(self, sub_id):
-        """Selecciona un subtítulo embebido específico"""
+        """Selecciona subtítulo y cierra el menú"""
         self.current_embedded_sub = sub_id
         self.player.video_set_spu(sub_id)
 
         # Actualizar estado del botón de subtítulos
         self.subtitle_enabled = (sub_id != -1)
         self.controls.set_subtitle_state(True, self.subtitle_enabled)
+
+        # Cerrar el menú
+        if hasattr(self, 'subtitle_menu') and self.subtitle_menu.winfo_exists():
+            self.subtitle_menu.destroy()
 
         print(f"Subtítulo embebido seleccionado: ID={sub_id}")
 
@@ -816,43 +1034,111 @@ class VideoPlayer:
 
         self.root.after(100, self.update_ui)
 
-    def toggle_play_pause(self):
-        """Alterna entre play/pause"""
-        if self.player.is_playing():
-            self.player.pause()
-            self.is_playing = False
-        else:
-            self.player.play()
-            self.is_playing = True
+    def _seek_to_saved_position(self, attempts=5):
+        if attempts <= 0:
+            print("No se pudo cargar la posición guardada - demasiados intentos")
+            return
 
-        self.controls.update_play_pause_button(self.is_playing)
+        print(f"Intentando cargar posición guardada (intentos restantes: {attempts})")
+        print(f"Media ready: {self.media_ready}, Player exists: {hasattr(self, 'player')}")
+
+        if self.saved_position > 0:
+            if self.media_ready and hasattr(self, 'player') and self.player:
+                print(f"Saltando a posición guardada: {self.saved_position}ms")
+                self.player.set_time(self.saved_position)
+                self.update_ui()
+            else:
+                print("Media no listo, reintentando...")
+                self.root.after(500, lambda: self._seek_to_saved_position(attempts-1))
+
+    def _save_position(self):
+        """Guarda la posición actual del video"""
+        if self.is_playing or self.player.get_state() == vlc.State.Paused:
+            current_pos = self.player.get_time()
+            if current_pos > 0:
+                self.pegasus_utils.save_video_position(self.video_name, current_pos)
+                print(f"Posición guardada: {current_pos}ms")
+
+    def _setup_save_events(self):
+        """Configura eventos para guardar el progreso"""
+        # Guardar al pausar/reanudar
+        self.root.bind("<space>", lambda e: self._save_position_after_action())
+
+        # Guardar al hacer clic en la barra de progreso
+        self.progress.progress_slider.bind("<ButtonRelease-1>",
+                                         lambda e: self._save_position())
+
+        # Guardar al avanzar/retroceder
+        self.root.bind("<Left>", lambda e: self._save_position_after_action())
+        self.root.bind("<Right>", lambda e: self._save_position_after_action())
+
+    def _save_position_after_action(self, delay=500):
+        """Guarda la posición después de un pequeño retraso"""
+        self.root.after(delay, self._save_position)
+
+    def toggle_play_pause(self, event=None):
+        """Alterna entre play/pause y guarda posición"""
+        print("[DEBUG] Ejecutando toggle_play_pause")
+        if hasattr(self, 'player') and self.player:
+            print(f"Estado actual: {'Reproduciendo' if self.player.is_playing() else 'Pausado'}")
+            if self.player.is_playing():
+                print("Pausando reproducción...")
+                self.player.pause()
+                self.is_playing = False
+                self._save_position()
+            else:
+                print("Iniciando reproducción...")
+                self.player.play()
+                self.is_playing = True
+                self._save_position_after_action()
+
+            print(f"Nuevo estado: {'Reproduciendo' if self.player.is_playing() else 'Pausado'}")
+            self.controls.update_play_pause_button(self.is_playing)
 
     def close_player(self):
-        """Cierra el reproductor"""
-        self.player.stop()
-        self.is_playing = False
-        self.root.quit()
-        self.root.destroy()
+        """Cierra el reproductor guardando la posición"""
+        if hasattr(self, 'player') and self.player:
+            current_pos = self.player.get_time()
+            if current_pos > 0:
+                self.pegasus_utils.save_video_position(self.video_name, current_pos)
+                print(f"Posición final guardada: {current_pos}ms")
+
+            self.player.stop()
+            self.is_playing = False
+
+        if hasattr(self, 'root'):
+            self.root.quit()
+            self.root.destroy()
 
     def run(self):
         """Inicia el bucle principal"""
         self.root.mainloop()
 
-    def _rewind_10s(self):
-        """Retrocede 10 segundos en el video"""
-        if self.media_ready:
+    def _rewind_10s(self, event=None):
+        """Retrocede 10 segundos y guarda posición"""
+        print("[DEBUG] Ejecutando _rewind_10s")
+        if self.media_ready and hasattr(self, 'player') and self.player:
             current_time = self.player.get_time()
-            new_time = max(0, current_time - 10000)  # 10,000 ms = 10s
+            print(f"Tiempo actual: {current_time}")
+            new_time = max(0, current_time - 10000)
+            print(f"Nuevo tiempo: {new_time}")
             self.player.set_time(new_time)
-            self.update_ui()  # Actualizar inmediatamente
+            print(f"Tiempo después de set_time: {self.player.get_time()}")
+            self.update_ui()
+            self._save_position_after_action()
 
-    def _forward_10s(self):
-        """Avanza 10 segundos en el video"""
-        if self.media_ready and self.total_time > 0:
+    def _forward_10s(self, event=None):
+        """Avanza 10 segundos y guarda posición"""
+        print("[DEBUG] Ejecutando _forward_10s")
+        if self.media_ready and hasattr(self, 'player') and self.player and self.total_time > 0:
             current_time = self.player.get_time()
-            new_time = min(self.total_time, current_time + 10000)  # 10,000 ms = 10s
+            print(f"Tiempo actual: {current_time}")
+            new_time = min(self.total_time, current_time + 10000)
+            print(f"Nuevo tiempo: {new_time}")
             self.player.set_time(new_time)
-            self.update_ui()  # Actualizar inmediatamente
+            print(f"Tiempo después de set_time: {self.player.get_time()}")
+            self.update_ui()
+            self._save_position_after_action()
 
     def _toggle_mute(self):
         """Alterna entre muteado y con volumen"""
@@ -862,7 +1148,7 @@ class VideoPlayer:
             self.player.audio_set_volume(0)
             self.controls.volume_slider.set(0)
         else:
-            volume = getattr(self, 'last_volume', 70)
+            volume = getattr(self, 'last_volume', 50)
             self.player.audio_set_volume(volume)
             self.controls.volume_slider.set(volume)
 
@@ -900,7 +1186,6 @@ class VideoPlayer:
             self.last_mouse_position = (event.x, event.y)
             self.mouse_idle_time = 0
 
-
     def _show_controls(self):
         """Muestra los controles manteniendo el 60% de ancho"""
         if self.is_fullscreen and not self.controls_visible:
@@ -931,8 +1216,6 @@ class VideoPlayer:
 
         # Configurar nuevo temporizador (3 segundos)
         self.hide_controls_timer_id = self.root.after(1000, self._hide_controls)
-
-    # Añade estos métodos a la clase VideoPlayer
 
     def _init_fullscreen_controls(self):
         """Inicializa el sistema de control para pantalla completa"""
@@ -971,3 +1254,26 @@ class VideoPlayer:
 
         # Programar la próxima verificación
         self.root.after(100, self._check_mouse_activity)
+
+    def _handle_rewind(self, event=None):
+        print("[DEBUG] Tecla izquierda presionada - Retroceder 10s")
+        self._rewind_10s()
+        return "break"
+
+    def _handle_forward(self, event=None):
+        print("[DEBUG] Tecla derecha presionada - Avanzar 10s")
+        self._forward_10s()
+        return "break"
+
+    def _handle_play_pause(self, event=None):
+        print("[DEBUG] Barra espaciadora presionada - Play/Pause")
+        self.toggle_play_pause()
+        return "break"
+
+    def _handle_volume_up(self, event=None):
+        self._increase_volume()
+        return "break"
+
+    def _handle_volume_down(self, event=None):
+        self._decrease_volume()
+        return "break"

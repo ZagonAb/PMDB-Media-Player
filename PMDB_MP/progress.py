@@ -50,12 +50,20 @@ class ProgressBar(ctk.CTkFrame):
     def _on_click_progress(self, event):
         self.user_interacting = True
         self._update_video_position()
+        # Notificar al reproductor para guardar posición
+        if self.seek_callback:
+            position = self.progress_slider.get() / 100
+            self.seek_callback(position)
 
     def _on_drag_progress(self, event):
         self._update_video_position()
 
     def _on_release_progress(self, event):
         self.user_interacting = False
+        # Notificar al reproductor para guardar posición
+        if self.seek_callback:
+            position = self.progress_slider.get() / 100
+            self.seek_callback(position)
 
     def _update_video_position(self):
         if self.seek_callback:
