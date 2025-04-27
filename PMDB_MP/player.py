@@ -11,13 +11,18 @@ from PMDB_MP.controls import PlayerControls
 from PMDB_MP.progress import ProgressBar
 from PMDB_MP.pegasus_utils import PegasusUtils
 from PMDB_MP.subtitle_menu import SubtitleMenu
+from PMDB_MP.locales import get_locale
 
 
 class VideoPlayer:
-    def __init__(self, video_path):
+    def __init__(self, video_path, language='es'):
         # Configuración de CustomTkinter con tema personalizado
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
+
+        # Cargar las traducciones
+        from PMDB_MP.locales import get_locale
+        self.locale = get_locale(language)
 
         video_name = os.path.basename(video_path)
         # Configurar colores personalizados para la aplicación
@@ -29,7 +34,8 @@ class VideoPlayer:
 
         # Crear ventana principal
         self.root = ctk.CTk()
-        self.root.title(f"PMDB Media Player - {video_name}")
+        #self.root.title(f"PMDB Media Player - {video_name}")
+        self.root.title(self.locale["player_title"].format(video_name))
         self.root.geometry("800x600")
         self.root.minsize(600,400)
 
@@ -108,7 +114,8 @@ class VideoPlayer:
             toggle_mute_cmd=self._toggle_mute,
             toggle_fullscreen_cmd=self._toggle_fullscreen,
             toggle_subtitle_cmd=self._toggle_subtitle,
-            show_subtitle_menu_cmd=self._show_subtitle_menu
+            show_subtitle_menu_cmd=self._show_subtitle_menu,
+            locale=self.locale  # Pasar las traducciones
         )
 
         # Configurar estado inicial de subtítulos
@@ -645,7 +652,7 @@ class VideoPlayer:
 
         # Crear ventana de diálogo
         dialog = ctk.CTkToplevel(self.root)
-        dialog.title("Confirmar salida")
+        dialog.title(self.locale["confirm_exit_title"],)
         dialog.geometry("400x150")
         dialog.transient(self.root)
         dialog.grab_set()
@@ -666,9 +673,16 @@ class VideoPlayer:
         frame.pack(padx=20, pady=20, fill='both', expand=True)
 
         # Mensaje
+        """
         label = ctk.CTkLabel(
             frame,
             text="¿Estás seguro que quieres salir del reproductor?\nSe guardará la posición actual.",
+            wraplength=350
+        )
+        """
+        label = ctk.CTkLabel(
+            frame,
+            text=self.locale["confirm_exit_message"],
             wraplength=350
         )
         label.pack(pady=10)
@@ -680,7 +694,7 @@ class VideoPlayer:
         # Botón Cancelar
         cancel_btn = ctk.CTkButton(
             btn_frame,
-            text="Cancelar",
+            text=self.locale["cancel_button"],
             command=on_cancel
         )
         cancel_btn.pack(side='left', padx=10)
@@ -688,7 +702,7 @@ class VideoPlayer:
         # Botón Salir
         exit_btn = ctk.CTkButton(
             btn_frame,
-            text="Salir",
+            text=self.locale["exit_button"],
             command=on_exit,
             fg_color="#d9534f",
             hover_color="#c9302c"
@@ -808,7 +822,12 @@ class VideoPlayer:
 
         while self.is_playing:
             time.sleep(0.1)
-            if not self.player.is_playing() and self.player.get_state() == vlc.State.Ended:
+            player_state = self.player.get_state()
+
+            # Detectar cuando el video termina
+            if player_state == vlc.State.Ended:
+                print("Video terminado, eliminando posición guardada...")
+                self.pegasus_utils.remove_video_position(self.video_name)
                 self.root.after(0, self.close_player)
                 break
 
@@ -848,7 +867,8 @@ class VideoPlayer:
                 root=self.root,
                 parent_frame=self.control_frame,
                 embedded_subtitles=self.embedded_subtitles,
-                select_callback=self._select_embedded_subtitle
+                select_callback=self._select_embedded_subtitle,
+                locale=self.locale
             )
 
         self._subtitle_menu.show(self.controls.embedded_sub_button)
@@ -958,12 +978,18 @@ class VideoPlayer:
             self.controls.update_play_pause_button(self.is_playing)
 
     def close_player(self):
-        """Cierra el reproductor guardando la posición"""
+        """Cierra el reproductor, guardando posición solo si no ha terminado"""
         if hasattr(self, 'player') and self.player:
-            current_pos = self.player.get_time()
-            if current_pos > 0:
-                self.pegasus_utils.save_video_position(self.video_name, current_pos)
-                print(f"Posición final guardada: {current_pos}ms")
+            player_state = self.player.get_state()
+
+            # Solo guardar posición si no ha terminado el video
+            if player_state != vlc.State.Ended:
+                current_pos = self.player.get_time()
+                if current_pos > 0:
+                    self.pegasus_utils.save_video_position(self.video_name, current_pos)
+                    print(f"Posición final guardada: {current_pos}ms")
+            else:
+                print("Video terminado, no se guarda posición")
 
             self.player.stop()
             self.is_playing = False

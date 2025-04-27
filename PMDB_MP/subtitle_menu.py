@@ -1,7 +1,9 @@
 import customtkinter as ctk
+from PMDB_MP.locales import get_locale
 
 class SubtitleMenu:
-    def __init__(self, root, parent_frame, embedded_subtitles, select_callback):
+    def __init__(self, root, parent_frame, embedded_subtitles, select_callback, locale=None):
+        self.locale = locale or get_locale("es")
         """
         Constructor del menú de subtítulos.
 
@@ -64,7 +66,7 @@ class SubtitleMenu:
         # Título
         title_label = ctk.CTkLabel(
             content_frame,
-            text="Seleccionar subtítulo",
+            text=self.locale["select_subtitle"],
             fg_color=bg_color,
             text_color=text_color,
             font=("Segoe UI", 12, "bold")
@@ -87,7 +89,7 @@ class SubtitleMenu:
         # Botón para desactivar subtítulos
         disable_btn = ctk.CTkButton(
             content_frame,
-            text="Desactivar subtítulos",
+            text=self.locale["disable_subtitles"],
             fg_color=btn_color,
             text_color=text_color,
             hover_color=hover_color,

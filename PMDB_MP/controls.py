@@ -3,12 +3,14 @@ import customtkinter as ctk
 from PIL import Image
 import os
 import sys
+from PMDB_MP.locales import get_locale
 
 class PlayerControls(ctk.CTkFrame):
     def __init__(self, master, play_pause_cmd, close_cmd, rewind_cmd, forward_cmd,
                 toggle_mute_cmd, toggle_fullscreen_cmd, toggle_subtitle_cmd=None,
-                show_subtitle_menu_cmd=None, **kwargs):
+                show_subtitle_menu_cmd=None, locale=None, **kwargs):
 
+        self.locale = locale or get_locale("es")
         # Añade estos colores al inicio del método
         self.btn_color = "#303338"  # Color de botones normal
         self.hover_color = "#474b50"  # Color al pasar el mouse
@@ -88,7 +90,7 @@ class PlayerControls(ctk.CTkFrame):
         # Botón Cerrar
         self.close_button = ctk.CTkButton(
             self,
-            text="" if self.close_icon else "Cerrar",
+            text="" if self.close_icon else self.locale["close"],
             image=self.close_icon,
             command=close_cmd,
             **button_config
@@ -129,7 +131,7 @@ class PlayerControls(ctk.CTkFrame):
         # Botón Fullscreen (nueva adición)
         self.fullscreen_button = ctk.CTkButton(
             self,
-            text="",
+            text="" if self.fullscreen_icon else self.locale["fullscreen"],
             image=self.fullscreen_icon,
             command=self._handle_fullscreen_click,
             **button_config
@@ -139,8 +141,8 @@ class PlayerControls(ctk.CTkFrame):
         # Botón Subtítulos (nuevo)
         self.subtitle_button = ctk.CTkButton(
             self,
-            text="",
-            image=self.subtitle_off_icon,  # Icono "off" inicial
+            text="" if self.subtitle_off_icon else self.locale["subtitle_off"],  # Texto inicial
+            image=self.subtitle_off_icon,
             command=toggle_subtitle_cmd if toggle_subtitle_cmd else None,
             state="normal" if toggle_subtitle_cmd else "disabled",
             **button_config
@@ -150,7 +152,7 @@ class PlayerControls(ctk.CTkFrame):
         # Botón Subtítulos Embebidos (nuevo, columna 9)
         self.embedded_sub_button = ctk.CTkButton(
             self,
-            text="",
+            text="" if self.embedded_sub_icon else self.locale["embedded_sub"],
             image=self.embedded_sub_icon,
             command=show_subtitle_menu_cmd if show_subtitle_menu_cmd else None,
             state="disabled",
@@ -177,6 +179,11 @@ class PlayerControls(ctk.CTkFrame):
         """Habilita/deshabilita el botón de subtítulos embebidos"""
         self.embedded_subtitles_available = available
         state = "normal" if available else "disabled"
+
+        # Configurar texto si no hay icono
+        if not self.embedded_sub_icon:
+            self.embedded_sub_button.configure(text=self.locale["embedded_sub"])
+
         self.embedded_sub_button.configure(state=state)
         print(f"[SUBTITLE_BUTTON] Estado actualizado: {state} (Disponible: {available})")
 
@@ -188,9 +195,19 @@ class PlayerControls(ctk.CTkFrame):
 
         if available:
             self.subtitle_button.configure(state="normal")
-            # Icono "on" cuando están activos, "off" cuando no
-            icon = self.subtitle_on_icon if enabled else self.subtitle_off_icon
-            self.subtitle_button.configure(image=icon)
+            if enabled:
+                # Subtítulos activados
+                icon = self.subtitle_on_icon if hasattr(self, 'subtitle_on_icon') else None
+                text = "" if icon else self.locale["subtitle_on"]
+            else:
+                # Subtítulos desactivados
+                icon = self.subtitle_off_icon if hasattr(self, 'subtitle_off_icon') else None
+                text = "" if icon else self.locale["subtitle_off"]
+
+            self.subtitle_button.configure(
+                image=icon,
+                text=text
+            )
         else:
             self.subtitle_button.configure(state="disabled")
 
@@ -282,28 +299,37 @@ class PlayerControls(ctk.CTkFrame):
 
     def update_play_pause_button(self, is_playing):
         """Actualiza el texto del botón según el estado"""
-        self.play_pause_button.configure(text="Pausar" if is_playing else "Reproducir")
+        self.play_pause_button.configure(text=self.locale["pause"] if is_playing else self.locale["play"])
 
     def update_fullscreen_button(self, is_fullscreen):
-        """Actualiza el icono del botón de pantalla completa"""
+        """Actualiza el icono/texto del botón de pantalla completa"""
         self.is_fullscreen = is_fullscreen
-        if hasattr(self, 'fullscreen_icon') and hasattr(self, 'no_fullscreen_icon'):
-            new_icon = self.no_fullscreen_icon if is_fullscreen else self.fullscreen_icon
-            self.fullscreen_button.configure(image=new_icon)
+
+        if is_fullscreen:
+            # Pantalla completa activa
+            new_icon = self.no_fullscreen_icon if hasattr(self, 'no_fullscreen_icon') else None
+            text = "" if new_icon else self.locale["no_fullscreen"]
         else:
-            # Fallback con emojis si hay problemas con los iconos
-            self.fullscreen_button.configure(text="🔍" if is_fullscreen else "⛶")
+            # Pantalla completa inactiva
+            new_icon = self.fullscreen_icon if hasattr(self, 'fullscreen_icon') else None
+            text = "" if new_icon else self.locale["fullscreen"]
+
+        self.fullscreen_button.configure(
+            image=new_icon,
+            text=text
+        )
 
     def update_play_pause_button(self, is_playing):
         """Actualiza el botón play/pause según el estado"""
         self.is_playing = is_playing
 
-        # Determinar qué icono usar basado en el estado y disponibilidad
+        # Determinar qué icono y texto usar basado en el estado
         if is_playing:
             icon = self.pause_icon
-            text = "" if self.pause_icon else "Pausar"
+            text = "" if self.pause_icon else self.locale["pause"]
         else:
             icon = self.play_icon
-            text = "" if self.play_icon else "Reproducir"
+            text = "" if self.play_icon else self.locale["play"]
 
+        # Asegurarse de actualizar tanto el icono como el texto
         self.play_pause_button.configure(image=icon, text=text)
