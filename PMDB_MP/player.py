@@ -10,6 +10,7 @@ from threading import Thread
 from PMDB_MP.controls import PlayerControls
 from PMDB_MP.progress import ProgressBar
 from PMDB_MP.pegasus_utils import PegasusUtils
+from PMDB_MP.subtitle_menu import SubtitleMenu
 
 
 class VideoPlayer:
@@ -29,7 +30,7 @@ class VideoPlayer:
         # Crear ventana principal
         self.root = ctk.CTk()
         self.root.title(f"PMDB Media Player - {video_name}")
-        self.root.geometry("1280x720.")
+        self.root.geometry("800x600")
         self.root.minsize(600,400)
 
         # ===== NUEVO CÓDIGO PARA EL ICONO =====
@@ -841,155 +842,16 @@ class VideoPlayer:
             self.embedded_subtitles = []
 
     def _show_subtitle_menu(self):
-        """Menú de subtítulos anclado al borde superior del contenedor de controles"""
-        # Cerrar si ya está abierto
-        if hasattr(self, 'subtitle_menu_frame') and self.subtitle_menu_frame.winfo_exists():
-            self.subtitle_menu_frame.destroy()
-            self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento
-            return
-
-        if not self.embedded_subtitles:
-            return
-
-        # Configuración de estilos
-        bg_color = "#202227"
-        btn_color = "#303338"
-        text_color = "white"
-        hover_color = "#404348"
-        separator_color = "#50555f"
-
-        # Obtener posición del contenedor de controles (borde SUPERIOR)
-        container_top = self.control_frame.winfo_rooty() - self.root.winfo_rooty()
-        btn = self.controls.embedded_sub_button
-        btn_x = btn.winfo_rootx() - self.root.winfo_rootx()
-
-        # Crear frame del menú
-        self.subtitle_menu_frame = ctk.CTkFrame(
-            self.root,
-            fg_color=bg_color,
-            border_width=1,             # Mantener el borde
-            border_color=separator_color,
-            corner_radius=0,            # ← Establecer radius en 0 para quitar los bordes redondeados
-            width=250
-        )
-
-        # Frame interno para contenido
-        content_frame = ctk.CTkFrame(
-            self.subtitle_menu_frame,
-            fg_color=bg_color
-        )
-        content_frame.pack(fill="both", expand=True, padx=5, pady=5)
-
-        # Título
-        title_label = ctk.CTkLabel(
-            content_frame,
-            text="Seleccionar subtítulo",
-            fg_color=bg_color,
-            text_color=text_color,
-            font=("Segoe UI", 12, "bold")
-        )
-        title_label.pack(padx=5, pady=(5, 3), fill='x')
-
-        # Separador
-        separator = ctk.CTkFrame(
-            content_frame,
-            height=1,
-            fg_color=separator_color
-        )
-        separator.pack(fill='x', pady=2)
-
-        # Función de cierre y selección
-        def select_and_close(sub_id):
-            self._select_embedded_subtitle(sub_id)
-            self.subtitle_menu_frame.destroy()
-            self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento al cerrar
-
-        # Botón para desactivar subtítulos
-        disable_btn = ctk.CTkButton(
-            content_frame,
-            text="Desactivar subtítulos",
-            fg_color=btn_color,
-            text_color=text_color,
-            hover_color=hover_color,
-            command=lambda: select_and_close(-1)
-        )
-        disable_btn.pack(fill='x', padx=5, pady=2)
-
-        # Separador
-        separator2 = ctk.CTkFrame(
-            content_frame,
-            height=1,
-            fg_color=separator_color
-        )
-        separator2.pack(fill='x', pady=2)
-
-        # Frame desplazable para tracks
-        scroll_frame = ctk.CTkScrollableFrame(
-            content_frame,
-            fg_color=bg_color,
-            height=150
-        )
-        scroll_frame.pack(fill='x', padx=5, pady=2)
-
-        # Botones para cada track
-        for sub in self.embedded_subtitles:
-            btn_text = f"Track {sub['id']}: {sub['name']}"
-            if len(btn_text) > 30:
-                btn_text = btn_text[:27] + "..."
-
-            sub_btn = ctk.CTkButton(
-                scroll_frame,
-                text=btn_text,
-                fg_color=btn_color,
-                text_color=text_color,
-                hover_color=hover_color,
-                anchor='w',
-                command=lambda id=sub['id']: select_and_close(id)
+        """Muestra el menú de selección de subtítulos embebidos"""
+        if not hasattr(self, '_subtitle_menu'):
+            self._subtitle_menu = SubtitleMenu(
+                root=self.root,
+                parent_frame=self.control_frame,
+                embedded_subtitles=self.embedded_subtitles,
+                select_callback=self._select_embedded_subtitle
             )
-            sub_btn.pack(fill='x', padx=0, pady=2)
 
-        # Calcular altura después de crear los elementos
-        self.subtitle_menu_frame.update_idletasks()
-        menu_height = self.subtitle_menu_frame.winfo_reqheight()
-
-        # Posicionamiento (borde inferior del menú en el borde superior del contenedor)
-        menu_y = container_top - menu_height
-
-        # Ajustar si se sale por arriba
-        if menu_y < 0:
-            menu_y = 5
-            self.subtitle_menu_frame.configure(height=container_top - 10)
-
-        # Posicionar el menú alineado horizontalmente con el botón
-        self.subtitle_menu_frame.place(
-            x=btn_x,
-            y=menu_y,
-            anchor="nw"
-        )
-
-        # Cerrar al hacer clic fuera
-        def on_click_outside(event):
-            if (hasattr(self, 'subtitle_menu_frame') and
-                self.subtitle_menu_frame.winfo_exists() and
-                not self.subtitle_menu_frame.winfo_containing(event.x, event.y)):
-                self.subtitle_menu_frame.destroy()
-                self.root.unbind("<Button-1>", self.click_outside_id)  # Desenlazar el evento
-
-        # Guardar el ID del binding para poder eliminar después
-        self.click_outside_id = self.root.bind("<Button-1>", on_click_outside)
-
-        # Cerrar al perder el foco y asegurar eliminación del binding
-        def on_focus_out(event):
-            if hasattr(self, 'subtitle_menu_frame') and self.subtitle_menu_frame.winfo_exists():
-                self.subtitle_menu_frame.destroy()
-                self.root.unbind("<Button-1>", self.click_outside_id)
-
-        self.subtitle_menu_frame.bind("<FocusOut>", on_focus_out)
-
-        # Enfocar el menú
-        self.subtitle_menu_frame.focus_set()
-
-
+        self._subtitle_menu.show(self.controls.embedded_sub_button)
 
     def _select_embedded_subtitle(self, sub_id):
         """Selecciona subtítulo y cierra el menú"""

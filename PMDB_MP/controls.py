@@ -5,7 +5,15 @@ import os
 import sys
 
 class PlayerControls(ctk.CTkFrame):
-    def __init__(self, master, play_pause_cmd, close_cmd, rewind_cmd, forward_cmd, toggle_mute_cmd, toggle_fullscreen_cmd, toggle_subtitle_cmd=None, show_subtitle_menu_cmd=None, **kwargs):
+    def __init__(self, master, play_pause_cmd, close_cmd, rewind_cmd, forward_cmd,
+                toggle_mute_cmd, toggle_fullscreen_cmd, toggle_subtitle_cmd=None,
+                show_subtitle_menu_cmd=None, **kwargs):
+
+        # Añade estos colores al inicio del método
+        self.btn_color = "#303338"  # Color de botones normal
+        self.hover_color = "#474b50"  # Color al pasar el mouse
+        self.text_color = "white"  # Color del texto
+
         super().__init__(master, **kwargs)
 
         # Guardamos los comandos como atributos
@@ -49,19 +57,31 @@ class PlayerControls(ctk.CTkFrame):
             width=30,
             height=30,
             command=rewind_cmd,
-            compound="top"  # Para alinear imagen y texto si ambos están presentes
+            compound="top",
+            fg_color=self.btn_color,
+            hover_color=self.hover_color,
+            text_color=self.text_color
         )
         self.rewind_button.grid(row=0, column=1, padx=5, pady=2)
+
+        # Aplica el mismo estilo a todos los botones:
+        button_config = {
+            'width': 30,
+            'height': 30,
+            'compound': "top",
+            'fg_color': self.btn_color,
+            'hover_color': self.hover_color,
+            'text_color': self.text_color,
+            'corner_radius': 5
+        }
 
         # Botón Play/Pause
         self.play_pause_button = ctk.CTkButton(
             self,
             text="",
             image=self.pause_icon,
-            width=30,
-            height=30,
             command=play_pause_cmd,
-            compound="top"
+            **button_config
         )
         self.play_pause_button.grid(row=0, column=2, padx=5, pady=2)
 
@@ -70,10 +90,8 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="" if self.close_icon else "Cerrar",
             image=self.close_icon,
-            width=30,
-            height=30,
             command=close_cmd,
-            compound="top"
+            **button_config
         )
         self.close_button.grid(row=0, column=3, padx=5, pady=2)
 
@@ -82,10 +100,8 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="" if self.forward_icon else "+10s ⏩",
             image=self.forward_icon,
-            width=30,
-            height=30,
             command=forward_cmd,
-            compound="top"
+            **button_config
         )
         self.forward_button.grid(row=0, column=4, padx=5, pady=2)
 
@@ -94,10 +110,8 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="" if (self.volume_icon and self.mute_icon) else "🔊",
             image=self.volume_icon,
-            width=30,
-            height=30,
             command=self._handle_mute_click,
-            compound="top"
+            **button_config
         )
         self.mute_button.grid(row=0, column=5, padx=(5, 0), pady=2)
 
@@ -117,9 +131,8 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="",
             image=self.fullscreen_icon,
-            width=30,
-            height=30,
-            command=self._handle_fullscreen_click
+            command=self._handle_fullscreen_click,
+            **button_config
         )
         self.fullscreen_button.grid(row=0, column=7, padx=5, pady=2)
 
@@ -128,10 +141,9 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="",
             image=self.subtitle_off_icon,  # Icono "off" inicial
-            width=30,
-            height=30,
             command=toggle_subtitle_cmd if toggle_subtitle_cmd else None,
-            state="normal" if toggle_subtitle_cmd else "disabled"
+            state="normal" if toggle_subtitle_cmd else "disabled",
+            **button_config
         )
         self.subtitle_button.grid(row=0, column=8, padx=5, pady=2)
 
@@ -140,10 +152,9 @@ class PlayerControls(ctk.CTkFrame):
             self,
             text="",
             image=self.embedded_sub_icon,
-            width=30,
-            height=30,
             command=show_subtitle_menu_cmd if show_subtitle_menu_cmd else None,
-            state="disabled"
+            state="disabled",
+            **button_config
         )
         self.embedded_sub_button.grid(row=0, column=9, padx=5, pady=2)
 
