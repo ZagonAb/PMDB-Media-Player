@@ -18,7 +18,7 @@
 - ✔️ Guardado automático de posición de reproducción
 - ✔️ Atajos de teclado para controles rápidos
 - ✔️ Internacionalización (español/inglés)
-- ✔️ Integración con Pegasus Frontend
+- ✔️ Integración con la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
 ## Requisitos del sistema
 
