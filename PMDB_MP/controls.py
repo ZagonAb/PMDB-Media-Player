@@ -11,27 +11,21 @@ class PlayerControls(ctk.CTkFrame):
                 show_subtitle_menu_cmd=None, locale=None, **kwargs):
 
         self.locale = locale or get_locale("es")
-        # Añade estos colores al inicio del método
-        self.btn_color = "#303338"  # Color de botones normal
-        self.hover_color = "#474b50"  # Color al pasar el mouse
-        self.text_color = "white"  # Color del texto
+        self.btn_color = "#303338"
+        self.hover_color = "#474b50"
+        self.text_color = "white"
 
         super().__init__(master, **kwargs)
 
-        # Guardamos los comandos como atributos
         self.play_pause_cmd = play_pause_cmd
         self.close_cmd = close_cmd
         self.rewind_cmd = rewind_cmd
         self.forward_cmd = forward_cmd
         self.toggle_mute_cmd = toggle_mute_cmd
         self.toggle_fullscreen_cmd = toggle_fullscreen_cmd
-        self.volume_change_cmd = None  # Lo asignaremos después
-
+        self.volume_change_cmd = None
         self.embedded_subtitles = []
-
-        # Obtener la ruta absoluta al directorio del proyecto
         self.base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
         self.volume_icon = self._load_icon("volume")
         self.mute_icon = self._load_icon("mute")
         self.fullscreen_icon = self._load_icon("fullscreen")
@@ -45,13 +39,11 @@ class PlayerControls(ctk.CTkFrame):
         self.subtitle_off_icon = self._load_icon("subtitle-off")
         self.embedded_sub_icon = self._load_icon("embedded-sub")
 
-        # Configuración del grid (8 columnas ahora para incluir el botón de fullscreen)
         for i in [0,  10]:
-            self.grid_columnconfigure(i, weight=1)  # Espacios laterales
+            self.grid_columnconfigure(i, weight=1)
         for i in range(1, 10):
-            self.grid_columnconfigure(i, weight=0)  # Botones
+            self.grid_columnconfigure(i, weight=0)
 
-        # Botón Retroceder 10s
         self.rewind_button = ctk.CTkButton(
             self,
             text="" if self.backward_icon else "⏪ -10s",
@@ -66,7 +58,6 @@ class PlayerControls(ctk.CTkFrame):
         )
         self.rewind_button.grid(row=0, column=1, padx=5, pady=2)
 
-        # Aplica el mismo estilo a todos los botones:
         button_config = {
             'width': 30,
             'height': 30,
@@ -77,7 +68,6 @@ class PlayerControls(ctk.CTkFrame):
             'corner_radius': 5
         }
 
-        # Botón Play/Pause
         self.play_pause_button = ctk.CTkButton(
             self,
             text="",
@@ -86,8 +76,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.play_pause_button.grid(row=0, column=2, padx=5, pady=2)
-
-        # Botón Cerrar
         self.close_button = ctk.CTkButton(
             self,
             text="" if self.close_icon else self.locale["close"],
@@ -96,8 +84,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.close_button.grid(row=0, column=3, padx=5, pady=2)
-
-        # Botón Avanzar 10s
         self.forward_button = ctk.CTkButton(
             self,
             text="" if self.forward_icon else "+10s ⏩",
@@ -106,8 +92,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.forward_button.grid(row=0, column=4, padx=5, pady=2)
-
-        # Botón Mute
         self.mute_button = ctk.CTkButton(
             self,
             text="" if (self.volume_icon and self.mute_icon) else "🔊",
@@ -116,8 +100,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.mute_button.grid(row=0, column=5, padx=(5, 0), pady=2)
-
-        # Barra de Volumen
         self.volume_slider = ctk.CTkSlider(
             self,
             from_=0,
@@ -127,8 +109,6 @@ class PlayerControls(ctk.CTkFrame):
         )
         self.volume_slider.set(50)
         self.volume_slider.grid(row=0, column=6, padx=(10, 5), pady=5, sticky="ew")
-
-        # Botón Fullscreen (nueva adición)
         self.fullscreen_button = ctk.CTkButton(
             self,
             text="" if self.fullscreen_icon else self.locale["fullscreen"],
@@ -137,8 +117,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.fullscreen_button.grid(row=0, column=7, padx=5, pady=2)
-
-        # Botón Subtítulos (nuevo)
         self.subtitle_button = ctk.CTkButton(
             self,
             text="" if self.subtitle_off_icon else self.locale["subtitle_off"],  # Texto inicial
@@ -148,8 +126,6 @@ class PlayerControls(ctk.CTkFrame):
             **button_config
         )
         self.subtitle_button.grid(row=0, column=8, padx=5, pady=2)
-
-        # Botón Subtítulos Embebidos (nuevo, columna 9)
         self.embedded_sub_button = ctk.CTkButton(
             self,
             text="" if self.embedded_sub_icon else self.locale["embedded_sub"],
@@ -160,15 +136,12 @@ class PlayerControls(ctk.CTkFrame):
         )
         self.embedded_sub_button.grid(row=0, column=9, padx=5, pady=2)
 
-        # Variables para subtítulos embebidos
         self.embedded_subtitles_available = False
         self.subtitle_menu = None
 
-        # Variables de estado
         self.subtitle_available = False
         self.subtitle_enabled = False
 
-        # Eventos de la barra de volumen
         self.volume_slider.bind("<Button-1>", self._handle_volume_change)
         self.volume_slider.bind("<B1-Motion>", self._handle_volume_change)
 
@@ -176,11 +149,9 @@ class PlayerControls(ctk.CTkFrame):
         self.is_fullscreen = False
 
     def set_embedded_subtitles_state(self, available):
-        """Habilita/deshabilita el botón de subtítulos embebidos"""
         self.embedded_subtitles_available = available
         state = "normal" if available else "disabled"
 
-        # Configurar texto si no hay icono
         if not self.embedded_sub_icon:
             self.embedded_sub_button.configure(text=self.locale["embedded_sub"])
 
@@ -189,18 +160,15 @@ class PlayerControls(ctk.CTkFrame):
 
 
     def set_subtitle_state(self, available, enabled=False):
-        """Configura el estado del botón de subtítulos"""
         self.subtitle_available = available
         self.subtitle_enabled = enabled
 
         if available:
             self.subtitle_button.configure(state="normal")
             if enabled:
-                # Subtítulos activados
                 icon = self.subtitle_on_icon if hasattr(self, 'subtitle_on_icon') else None
                 text = "" if icon else self.locale["subtitle_on"]
             else:
-                # Subtítulos desactivados
                 icon = self.subtitle_off_icon if hasattr(self, 'subtitle_off_icon') else None
                 text = "" if icon else self.locale["subtitle_off"]
 
@@ -212,40 +180,31 @@ class PlayerControls(ctk.CTkFrame):
             self.subtitle_button.configure(state="disabled")
 
     def set_volume_change_callback(self, callback):
-        """Asigna el callback para cambios de volumen"""
         self.volume_change_cmd = callback
 
     def _handle_volume_change(self, event=None):
-        """Maneja cambios en la barra de volumen"""
         if self.volume_change_cmd:
             self.volume_change_cmd(self.volume_slider.get())
 
     def _handle_mute_click(self):
-        """Versión alternativa que maneja estado local"""
         if self.toggle_mute_cmd:
-            self.toggle_mute_cmd()  # Notifica al reproductor
+            self.toggle_mute_cmd()
             self.is_muted = not self.is_muted
             self._update_mute_icon()
-            # Asegurar sincronización con barra de volumen
             self.volume_slider.set(0 if self.is_muted else getattr(self, 'last_volume', 70))
 
     def _handle_fullscreen_click(self):
-        """Maneja el clic en el botón de pantalla completa"""
         if self.toggle_fullscreen_cmd:
-            self.toggle_fullscreen_cmd()  # Notifica al reproductor
-            # No cambiamos el estado aquí, lo hará el reproductor al llamar update_fullscreen_button
+            self.toggle_fullscreen_cmd()
 
     def _update_fullscreen_icon(self):
-        """Actualiza el icono basado en el estado de pantalla completa"""
         if hasattr(self, 'fullscreen_icon') and hasattr(self, 'no_fullscreen_icon'):
             new_icon = self.no_fullscreen_icon if self.is_fullscreen else self.fullscreen_icon
             self.fullscreen_button.configure(image=new_icon)
         else:
-            # Fallback con emojis si hay problemas con los iconos
             self.fullscreen_button.configure(text="🔍" if self.is_fullscreen else "⛶")
 
     def update_volume_controls(self, volume, is_muted):
-        """Actualiza tanto la barra como el botón de mute"""
         self.volume_slider.set(volume)
         self.update_mute_button(is_muted)
 
@@ -254,17 +213,15 @@ class PlayerControls(ctk.CTkFrame):
         print(f"El archivo existe: {os.path.exists(os.path.join(self.base_path, 'assets', 'icons', 'volume.png'))}")
 
     def _update_mute_icon(self):
-        """Actualiza el icono basado en el estado mute"""
         if hasattr(self, 'mute_icon') and hasattr(self, 'volume_icon'):
             new_icon = self.mute_icon if self.is_muted else self.volume_icon
             self.mute_button.configure(image=new_icon)
         else:
-            # Fallback con emojis si hay problemas con los iconos
             self.mute_button.configure(text="🔇" if self.is_muted else "🔊")
 
     def _load_icon(self, icon_name):
         base_paths = [
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),  # PMDB_MP/
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
             os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
             os.path.dirname(sys.executable),
             getattr(sys, '_MEIPASS', '')
@@ -298,19 +255,15 @@ class PlayerControls(ctk.CTkFrame):
             self.mute_button.configure(text="🔇" if is_muted else "🔊")
 
     def update_play_pause_button(self, is_playing):
-        """Actualiza el texto del botón según el estado"""
         self.play_pause_button.configure(text=self.locale["pause"] if is_playing else self.locale["play"])
 
     def update_fullscreen_button(self, is_fullscreen):
-        """Actualiza el icono/texto del botón de pantalla completa"""
         self.is_fullscreen = is_fullscreen
 
         if is_fullscreen:
-            # Pantalla completa activa
             new_icon = self.no_fullscreen_icon if hasattr(self, 'no_fullscreen_icon') else None
             text = "" if new_icon else self.locale["no_fullscreen"]
         else:
-            # Pantalla completa inactiva
             new_icon = self.fullscreen_icon if hasattr(self, 'fullscreen_icon') else None
             text = "" if new_icon else self.locale["fullscreen"]
 
@@ -320,10 +273,8 @@ class PlayerControls(ctk.CTkFrame):
         )
 
     def update_play_pause_button(self, is_playing):
-        """Actualiza el botón play/pause según el estado"""
         self.is_playing = is_playing
 
-        # Determinar qué icono y texto usar basado en el estado
         if is_playing:
             icon = self.pause_icon
             text = "" if self.pause_icon else self.locale["pause"]
@@ -331,5 +282,4 @@ class PlayerControls(ctk.CTkFrame):
             icon = self.play_icon
             text = "" if self.play_icon else self.locale["play"]
 
-        # Asegurarse de actualizar tanto el icono como el texto
         self.play_pause_button.configure(image=icon, text=text)

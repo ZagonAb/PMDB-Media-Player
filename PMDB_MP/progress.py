@@ -10,36 +10,26 @@ class ProgressBar(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=9)
         self.grid_columnconfigure(2, weight=1)
-
-        # Slider como barra de progreso con handle que sobresale
         self.progress_slider = ctk.CTkSlider(
             self,
             from_=0,
             to=100,
             number_of_steps=10000,
-            height=10,  # Grosor normal de la barra (como antes)
+            height=10,
             progress_color="#50555f",
             fg_color="#383838",
             button_color="#50555f",
             button_hover_color="#60656f",
-            button_corner_radius=10,  # Handle completamente redondo
-            corner_radius=3  # Bordes ligeramente redondeados para la barra
+            button_corner_radius=10,
+            corner_radius=3
         )
         self.progress_slider.grid(row=0, column=1, sticky="ew", padx=(0, 0))
         self.progress_slider.set(0)
-
-        # Ajustar el padding vertical para que el handle no se corte
-        self.grid_rowconfigure(0, weight=1, pad=3)  # Espacio para el handle
-
-        # Etiqueta de tiempo
+        self.grid_rowconfigure(0, weight=1, pad=3)
         self.time_label = ctk.CTkLabel(self, width=100, text="00:00:00 / 00:00:00")
         self.time_label.grid(row=0, column=2, sticky="w", padx=(10, 0))
-
-        # Callback y estado
         self.seek_callback = None
         self.user_interacting = False
-
-        # Eventos
         self.progress_slider.bind("<Button-1>", self._on_click_progress)
         self.progress_slider.bind("<B1-Motion>", self._on_drag_progress)
         self.progress_slider.bind("<ButtonRelease-1>", self._on_release_progress)
@@ -50,7 +40,6 @@ class ProgressBar(ctk.CTkFrame):
     def _on_click_progress(self, event):
         self.user_interacting = True
         self._update_video_position()
-        # Notificar al reproductor para guardar posición
         if self.seek_callback:
             position = self.progress_slider.get() / 100
             self.seek_callback(position)
@@ -60,7 +49,6 @@ class ProgressBar(ctk.CTkFrame):
 
     def _on_release_progress(self, event):
         self.user_interacting = False
-        # Notificar al reproductor para guardar posición
         if self.seek_callback:
             position = self.progress_slider.get() / 100
             self.seek_callback(position)

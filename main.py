@@ -3,7 +3,7 @@ import os
 import sys
 import argparse
 from PMDB_MP.player import VideoPlayer
-from PMDB_MP.locales import get_locale  # Importar la función de traducción
+from PMDB_MP.locales import get_locale
 
 def main():
     parser = argparse.ArgumentParser(description='PMDB Media Player')

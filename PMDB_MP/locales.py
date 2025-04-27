@@ -1,9 +1,3 @@
-# locales.py
-"""
-Archivo de internacionalización para PMDB Media Player
-Contiene textos en español latino (por defecto) e inglés USA
-"""
-
 LOCALES = {
     "es": {
         "player_title": "PMDB Media Player - {}",
@@ -52,5 +46,4 @@ LOCALES = {
 }
 
 def get_locale(language):
-    """Devuelve el diccionario de traducciones para el idioma especificado"""
-    return LOCALES.get(language, LOCALES["es"])  # Español por defecto
+    return LOCALES.get(language, LOCALES["es"])

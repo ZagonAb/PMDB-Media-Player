@@ -9,7 +9,7 @@ setup(
     install_requires=[
         'python-vlc',
         'customtkinter',
-        'Pillow'  # Para manejo de imágenes en los controles
+        'Pillow'
     ],
     entry_points={
         'console_scripts': [
@@ -17,6 +17,6 @@ setup(
         ],
     },
     package_data={
-        'PMDB_MP': ['assets/icons/*.png'],  # Incluir iconos si los tienes
+        'PMDB_MP': ['assets/icons/*.png'],
     },
 )
