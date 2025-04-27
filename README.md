@@ -1,6 +1,6 @@
 # PMDB Media Player
 - Pegasus Movie Data Base Media Player
-- Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)."
+- Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
 - Modo ventana.
 ![screenshot](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
@@ -90,7 +90,7 @@ Los iconos soportados son:
 
 ## Construir ejecutable
 
-- Se recomienda crear un ejecutable independiente su integracion con PMDB-Theme
+- Se recomienda crear un ejecutable independiente para su integración con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
 ```bash
 python build.py
