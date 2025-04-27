@@ -8,9 +8,6 @@
 - Pantalla completa.
 ![screenshot1](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen1.png)
 
-
-```markdown
-
 - Un reproductor multimedia avanzado construido con Python, VLC y CustomTkinter.
 
 ## Características principales
@@ -111,4 +108,3 @@ Si encuentras algún problema, por favor abre un issue en el repositorio.
 ## Licencia
 
 Este proyecto está licenciado bajo los términos de la [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) o posterior, en cumplimiento con los requisitos de licencia de python-vlc/VLC.
-
