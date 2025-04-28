@@ -73,6 +73,7 @@ python3 main.py --language "en" --fullscreen /ruta/al/video.mp4
 
 El reproductor guarda automáticamente la última posición de reproducción en:
 - Linux: `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json`
+- Linux ` (Flatpak): ~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json`
 - Windows: `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json`
 - macOS: `~/Library/Preferences/pegasus-frontend/themes/PMDB-Theme/database.json`
 
