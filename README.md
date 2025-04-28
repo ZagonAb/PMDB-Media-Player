@@ -107,14 +107,9 @@ Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
 
 ## Construir ejecutable
 
-Para crear un ejecutable independiente (requiere PyInstaller):
+Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)):
 
-1. Instala PyInstaller:
-```bash
-pip install pyinstaller
-```
-
-2. Ejecuta el script de construcción:
+1. Ejecuta el script de construcción:
 ```bash
 python build.py
 ```
@@ -137,15 +132,3 @@ Este proyecto está licenciado bajo los términos de la [GNU GPLv3](https://www.
 ---
 **Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
 ```
-
-Mejoras principales:
-1. Añadido badge de licencia
-2. Organizado mejor las secciones de requisitos por sistema operativo
-3. Mejor formato para las tablas de atajos y ubicaciones de configuración
-4. Añadidas notas específicas para construcción en diferentes sistemas
-5. Mejor estructura visual con separadores claros
-6. Incluido comando alternativo de instalación manual
-7. Más detalles sobre los requisitos de construcción
-8. Enlace directo a issues para soporte
-
-¿Te gustaría que añada alguna sección adicional o modifique algo específico?
