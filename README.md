@@ -143,4 +143,3 @@ Este proyecto está licenciado bajo los términos de la [GNU GPLv3](https://www.
 
 ---
 **Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
-```
