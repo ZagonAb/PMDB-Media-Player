@@ -47,17 +47,31 @@ git clone https://github.com/ZagonAb/PMDB-Media-Player
 cd PMDB-Media-Player
 ```
 
-2. Instala las dependencias:
+2. Crea y activa un entorno virtual de Python (recomendado):
+
+#### Linux/macOS
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Windows
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+3. Instala las dependencias dentro del entorno virtual:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Uso básico
-
-Para reproducir un video:
+4. Ejecuta el reproductor:
 ```bash
-python3 main.py /ruta/al/video.mp4
+python main.py /ruta/al/video.mp4
 ```
+
+## Uso básico
 
 Opciones disponibles:
 - `--fullscreen`: Inicia en modo pantalla completa
@@ -65,7 +79,7 @@ Opciones disponibles:
 
 Ejemplo:
 ```bash
-python3 main.py --language "en" --fullscreen /ruta/al/video.mp4
+python main.py --language "en" --fullscreen /ruta/al/video.mp4
 ```
 
 ## Atajos de teclado
