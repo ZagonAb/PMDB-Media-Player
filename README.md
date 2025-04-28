@@ -1,5 +1,5 @@
 # PMDB Media Player
-- Pegasus Movie Data Base Media Player
+
 - Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 - Pegasus Movie Data Base Media Player (PMDB-MP) es un proyecto personal, sin afiliación ni relación oficial con Pegasus Frontend. Se trata de un desarrollo independiente que comparto de manera abierta con la comunidad.
 
