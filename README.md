@@ -17,7 +17,7 @@
 - ✔️ Funcionalidad de pantalla completa
 - ✔️ Guardado automático de posición de reproducción
 - ✔️ Atajos de teclado para controles rápidos
-- ✔️ Internacionalización (español/inglés)
+- ✔️ Interfaz en español e inglés
 - ✔️ Integración con la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
 ## Requisitos del sistema
