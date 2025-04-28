@@ -52,11 +52,6 @@ cd PMDB-Media-Player
 pip install -r requirements.txt
 ```
 
-O instala manualmente:
-```bash
-pip install python-vlc customtkinter Pillow
-```
-
 ## Uso básico
 
 Para reproducir un video:
