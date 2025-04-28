@@ -1,12 +1,11 @@
 # PMDB Media Player
 
-- Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
-- Pegasus Movie Data Base Media Player (PMDB-MP) es un proyecto personal, sin afiliación ni relación oficial con Pegasus Frontend. Se trata de un desarrollo independiente que comparto de manera abierta con la comunidad.
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-- Modo ventana.
-![screenshot](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
-- Pantalla completa.
-![screenshot1](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen1.png)
+Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
+
+![Modo ventana](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
+![Pantalla completa](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen1.png)
 
 ## Características principales
 
@@ -22,15 +21,29 @@
 
 ## Requisitos del sistema
 
+### Dependencias comunes
 - Python 3.8 o superior
 - VLC media player instalado en el sistema
-- Dependencias listadas en `requirements.txt`
+
+#### Linux (Debian/Ubuntu)
+```bash
+sudo apt-get install -y python3-dev python3-pip libvlc-dev vlc libx11-dev libgtk-3-dev
+```
+
+#### Windows
+- Instalar [VLC media player (64-bit)](https://www.videolan.org/)
+- Instalar [Python 3.8+](https://www.python.org/)
+
+#### macOS
+```bash
+brew install python vlc
+```
 
 ## Instalación
 
 1. Clona el repositorio:
 ```bash
-git https://github.com/ZagonAb/PMDB-Media-Player
+git clone https://github.com/ZagonAb/PMDB-Media-Player
 cd PMDB-Media-Player
 ```
 
@@ -39,10 +52,14 @@ cd PMDB-Media-Player
 pip install -r requirements.txt
 ```
 
+O instala manualmente:
+```bash
+pip install python-vlc customtkinter Pillow
+```
+
 ## Uso básico
 
 Para reproducir un video:
-
 ```bash
 python3 main.py /ruta/al/video.mp4
 ```
@@ -72,38 +89,68 @@ python3 main.py --language "en" --fullscreen /ruta/al/video.mp4
 ## Configuración avanzada
 
 El reproductor guarda automáticamente la última posición de reproducción en:
-- Linux: `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json`
-- Linux ` (Flatpak): ~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json`
-- Windows: `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json`
-- macOS: `~/Library/Preferences/pegasus-frontend/themes/PMDB-Theme/database.json`
+
+| Sistema | Ubicación |
+|---------|-----------|
+| Linux | `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json` |
+| Linux (Flatpak) | `~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json` |
+| Windows | `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json` |
+| macOS | `~/Library/Preferences/pegasus-frontend/themes/PMDB-Theme/database.json` |
 
 ## Personalización
 
-Puedes personalizar los iconos del reproductor colocando archivos PNG en:
-`PMDB_MP/assets/icons/`
+### Iconos
+Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
 
-Los iconos soportados son:
-- `play.png`, `pause.png`
-- `volume.png`, `mute.png`
-- `fullscreen.png`, `no-fullscreen.png`
-- `forward.png`, `backward.png`
-- `subtitle-on.png`, `subtitle-off.png`
-- `embedded-sub.png`
+| Función | Archivos |
+|---------|----------|
+| Reproducción | `play.png`, `pause.png` |
+| Volumen | `volume.png`, `mute.png` |
+| Pantalla completa | `fullscreen.png`, `no-fullscreen.png` |
+| Navegación | `forward.png`, `backward.png` |
+| Subtítulos | `subtitle-on.png`, `subtitle-off.png`, `embedded-sub.png` |
 
 ## Construir ejecutable
 
-- Se recomienda crear un ejecutable independiente para su integración con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
+Para crear un ejecutable independiente (requiere PyInstaller):
 
+1. Instala PyInstaller:
+```bash
+pip install pyinstaller
+```
+
+2. Ejecuta el script de construcción:
 ```bash
 python build.py
 ```
 
 El ejecutable se generará en `dist/PMDB_Media_Player`
 
+### Notas para builds:
+- **Windows**: Asegúrate de incluir los DLLs de VLC
+- **Linux**: Se empaquetan los plugins de VLC automáticamente
+- **macOS**: Requiere libffi (`brew install libffi`)
+
 ## Soporte
 
-Si encuentras algún problema, por favor abre un issue en el repositorio.
+Si encuentras algún problema, por favor abre un issue en el [repositorio](https://github.com/ZagonAb/PMDB-Media-Player/issues).
 
 ## Licencia
 
 Este proyecto está licenciado bajo los términos de la [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) o posterior, en cumplimiento con los requisitos de licencia de python-vlc/VLC.
+
+---
+**Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
+```
+
+Mejoras principales:
+1. Añadido badge de licencia
+2. Organizado mejor las secciones de requisitos por sistema operativo
+3. Mejor formato para las tablas de atajos y ubicaciones de configuración
+4. Añadidas notas específicas para construcción en diferentes sistemas
+5. Mejor estructura visual con separadores claros
+6. Incluido comando alternativo de instalación manual
+7. Más detalles sobre los requisitos de construcción
+8. Enlace directo a issues para soporte
+
+¿Te gustaría que añada alguna sección adicional o modifique algo específico?
