@@ -71,8 +71,6 @@ pip install -r requirements.txt
 python main.py /ruta/al/video.mp4
 ```
 
-## Uso básico
-
 Opciones disponibles:
 - `--fullscreen`: Inicia en modo pantalla completa
 - `--language [es|en]`: Selecciona el idioma de la interfaz
