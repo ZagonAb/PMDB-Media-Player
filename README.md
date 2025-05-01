@@ -42,7 +42,7 @@ cd PMDB-Media-Player
 
 2. Crea y activa un entorno virtual de Python (recomendado en gnu/linux):
 
-#### Linux/macOS
+#### Linux
 ```bash
 python3 -m venv venv
 source venv/bin/activate
