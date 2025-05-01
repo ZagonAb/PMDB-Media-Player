@@ -1,7 +1,5 @@
 # PMDB Media Player
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-
 Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
 ![Modo ventana](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
@@ -130,7 +128,7 @@ Si encuentras algún problema, por favor abre un issue en el [repositorio](https
 
 ## Licencia
 
-Este proyecto está licenciado bajo los términos de la [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) o posterior, en cumplimiento con los requisitos de licencia de python-vlc/VLC.
+Este proyecto está licenciado bajo los términos de la [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) o posterior, en cumplimiento con los requisitos de licencia de python-vlc/VLC.
 
 ---
 **Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
