@@ -40,7 +40,7 @@ git clone https://github.com/ZagonAb/PMDB-Media-Player
 cd PMDB-Media-Player
 ```
 
-2. Crea y activa un entorno virtual de Python (recomendado en gnu/linux):
+2. Crea y activa un entorno virtual de Python (recomendado en **Linux**):
 
 #### Linux
 ```bash
@@ -71,7 +71,7 @@ setx /M PATH "%PATH%;C:\Program Files\VideoLAN\VLC"
 > - Asegúrate de que la ruta `C:\Program Files\VideoLAN\VLC` es la correcta.
 
 3. **Reinicia el terminal o tu sesión**
-- Los cambios no afectan terminales abiertos previamente. Cierra y abre uno nuevo para que el cambio surta efecto.
+   Los cambios no afectan terminales abiertos previamente. Cierra y abre uno nuevo para que el cambio surta efecto.
 
 4. **Verifica que funciona**  
    Escribe en la terminal:
@@ -139,7 +139,7 @@ Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
 
 ## Construir ejecutable
 
-Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en gnu/linux):
+Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en **Linux**):
 
 1. Ejecuta el script de construcción:
 ```bash
