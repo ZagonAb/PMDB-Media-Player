@@ -70,12 +70,15 @@ setx /M PATH "%PATH%;C:\Program Files\VideoLAN\VLC"
 > - `/M` modifica el `PATH` **del sistema** (no solo el del usuario).
 > - Asegúrate de que la ruta `C:\Program Files\VideoLAN\VLC` es la correcta.
 
-3. **Verifica que funciona**  
+3. **Reinicia el terminal o tu sesión**
+- Los cambios no afectan terminales abiertos previamente. Cierra y abre uno nuevo para que el cambio surta efecto.
+
+4. **Verifica que funciona**  
    Escribe en la terminal:
 ```cmd
 vlc --version
 ```
-   Deberías ver la versión de VLC.
+- Deberías ver la versión de VLC.
 ---
 - Instala las dependencias en windows.
 
