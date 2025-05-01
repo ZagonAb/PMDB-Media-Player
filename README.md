@@ -100,6 +100,20 @@ Ejemplo:
 python main.py --language "en" --fullscreen /ruta/al/video.mp4
 ```
 
+## Construir ejecutable
+
+Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en **Linux**):
+
+1. Ejecuta el script de construcción:
+```bash
+python build.py
+```
+
+El ejecutable se generará en `dist/PMDB_Media_Player`
+
+### Nota
+- **Windows**: **No es requerido enpaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
+
 ## Atajos de teclado
 
 | Tecla               | Función                          |
@@ -136,20 +150,6 @@ Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
 | Pantalla completa | `fullscreen.png`, `no-fullscreen.png` |
 | Navegación | `forward.png`, `backward.png` |
 | Subtítulos | `subtitle-on.png`, `subtitle-off.png`, `embedded-sub.png` |
-
-## Construir ejecutable
-
-Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en **Linux**):
-
-1. Ejecuta el script de construcción:
-```bash
-python build.py
-```
-
-El ejecutable se generará en `dist/PMDB_Media_Player`
-
-### Nota
-- **Windows**: **No es requerido enpaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
 
 ## Soporte
 
