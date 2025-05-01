@@ -34,11 +34,6 @@ sudo apt-get install -y python3-dev python3-pip libvlc-dev vlc libx11-dev libgtk
 - Instalar [VLC media player (64-bit)](https://www.videolan.org/)
 - Instalar [Python 3.8+](https://www.python.org/)
 
-#### macOS
-```bash
-brew install python vlc
-```
-
 ## Instalación
 
 1. Clona el repositorio:
@@ -47,7 +42,7 @@ git clone https://github.com/ZagonAb/PMDB-Media-Player
 cd PMDB-Media-Player
 ```
 
-2. Crea y activa un entorno virtual de Python (recomendado):
+2. Crea y activa un entorno virtual de Python (recomendado en gnu/linux):
 
 #### Linux/macOS
 ```bash
@@ -55,13 +50,11 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-#### Windows
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
 3. Instala las dependencias dentro del entorno virtual:
+```bash
+pip install -r requirements.txt
+```
+- En windows no creo sea necesario crear un entorno virtual simplemente instale las dependencias
 ```bash
 pip install -r requirements.txt
 ```
@@ -119,7 +112,7 @@ Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
 
 ## Construir ejecutable
 
-Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)):
+Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en gnu/linux):
 
 1. Ejecuta el script de construcción:
 ```bash
@@ -128,10 +121,8 @@ python build.py
 
 El ejecutable se generará en `dist/PMDB_Media_Player`
 
-### Notas para builds:
-- **Windows**: Asegúrate de incluir los DLLs de VLC
-- **Linux**: Se empaquetan los plugins de VLC automáticamente
-- **macOS**: Requiere libffi (`brew install libffi`)
+### Nota
+- **Windows**: **No es requerido enpaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
 
 ## Soporte
 

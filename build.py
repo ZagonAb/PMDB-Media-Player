@@ -7,6 +7,7 @@ from PyInstaller.utils.hooks import collect_data_files
 
 def get_data_files():
     data_files = []
+
     icons = glob.glob('assets/icons/*.png') + glob.glob('assets/icons/*.ico')
     data_files.extend([(icon, 'assets/icons') for icon in icons])
     py_files = glob.glob('PMDB_MP/*.py')
@@ -15,45 +16,61 @@ def get_data_files():
     return data_files
 
 def build():
+    if platform.system() != 'Linux':
+        print("Este script de construcción es solo para Linux")
+        print("Para Windows, por favor usa la versión portable con Python")
+        return
+
     opts = [
         'main.py',
         '--name=PMDB_Media_Player',
-        '--onefile',
         '--windowed',
-        '--icon=assets/icons/player_icon.ico',
+        '--icon=assets/icons/pmdbmp.ico',
+        '--onefile',
+        '--noconfirm',
+        '--clean'
+    ]
+
+    hidden_imports = [
         '--hidden-import=customtkinter',
         '--hidden-import=vlc',
         '--hidden-import=PIL',
         '--hidden-import=PIL._tkinter_finder',
-        '--hidden-import=PIL.ImageTk',
+        '--hidden-import=PIL.ImageTk'
+    ]
+    opts.extend(hidden_imports)
+
+    collect_options = [
         '--collect-all=customtkinter',
         '--collect-data=Pillow',
         '--collect-submodules=PIL'
     ]
-
+    opts.extend(collect_options)
+    separator = ':'
     for src, dst in get_data_files():
-        opts.append(f'--add-data={src}:{dst}')
+        opts.append(f'--add-data={src}{separator}{dst}')
 
-    if platform.system() == 'Linux':
-        vlc_paths = [
-            '/usr/lib/x86_64-linux-gnu/libvlc.so',
-            '/usr/lib/x86_64-linux-gnu/libvlccore.so',
-            '/usr/lib/x86_64-linux-gnu/vlc/plugins',
-        ]
+    vlc_paths = [
+        '/usr/lib/x86_64-linux-gnu/libvlc.so',
+        '/usr/lib/x86_64-linux-gnu/libvlccore.so',
+        '/usr/lib/x86_64-linux-gnu/vlc/plugins',
+    ]
 
-        for path in vlc_paths:
-            if os.path.exists(path):
-                if os.path.isfile(path):
-                    opts.append(f'--add-binary={path}:.')
-                elif os.path.isdir(path):
-                    opts.append(f'--add-binary={path}/*:vlc/plugins')
+    for path in vlc_paths:
+        if os.path.exists(path):
+            if os.path.isfile(path):
+                opts.append(f'--add-binary={path}:.')
+            elif os.path.isdir(path):
+                opts.append(f'--add-binary={path}/*:vlc/plugins')
 
-    PyInstaller.__main__.run(opts)
-
-if __name__ == '__main__':
     shutil.rmtree('build', ignore_errors=True)
     shutil.rmtree('dist', ignore_errors=True)
+    print("\nIniciando construcción para Linux con opciones:")
+    print(" ".join(opts))
+    PyInstaller.__main__.run(opts)
 
+    print("\n¡Build para Linux completado exitosamente!")
+    print(f"Ejecutable creado en: dist/PMDB_Media_Player")
+
+if __name__ == '__main__':
     build()
-
-    print("\nBuild completado! Ejecutable creado en: dist/PMDB_Media_Player")

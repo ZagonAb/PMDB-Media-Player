@@ -12,6 +12,9 @@ from PMDB_MP.progress import ProgressBar
 from PMDB_MP.pegasus_utils import PegasusUtils
 from PMDB_MP.subtitle_menu import SubtitleMenu
 from PMDB_MP.locales import get_locale
+import traceback
+import ctypes
+from ctypes.util import find_library
 
 
 class VideoPlayer:
@@ -95,13 +98,6 @@ class VideoPlayer:
 
         self.controls.set_volume_change_callback(self._on_volume_change)
         self.controls.pack(fill=tk.X)
-
-        vlc_args = ['--no-xlib', '--quiet']
-
-        self.instance = vlc.Instance(vlc_args)
-        self.player = self.instance.media_player_new()
-        self.media = self.instance.media_new(video_path)
-        self.media.parse_with_options(vlc.MediaParseFlag.local, 0)
 
         events = self.media.event_manager()
         events.event_attach(vlc.EventType.MediaParsedChanged, self.on_media_parsed)
@@ -239,15 +235,28 @@ class VideoPlayer:
                 self.update_ui()
 
         def close_player(self):
-            if self.is_playing:
-                current_position = self.player.get_time()
-                if current_position > 0:
-                    self.pegasus_utils.save_video_position(self.video_name, current_position)
+            try:
+                if hasattr(self, 'player') and self.player:
+                    player_state = self.player.get_state()
+                    if player_state != vlc.State.Ended:
+                        current_pos = self.player.get_time()
+                        if current_pos > 0:
+                            self.pegasus_utils.save_video_position(self.video_name, current_pos)
+                            print(f"Posición final guardada: {current_pos}ms")
 
-            self.player.stop()
-            self.is_playing = False
-            self.root.quit()
-            self.root.destroy()
+                    self.player.stop()
+                    self.player.release()
+                    self.is_playing = False
+
+                if hasattr(self, 'instance') and self.instance:
+                    self.instance.release()
+
+            except Exception as e:
+                print(f"Error al cerrar el reproductor: {e}")
+
+            if hasattr(self, 'root'):
+                self.root.quit()
+                self.root.destroy()
 
     def _ensure_subtitles_off(self):
         print("[ENSURE_OFF] Comprobando estado de subtítulos")
@@ -623,9 +632,9 @@ class VideoPlayer:
         self.media.parse_with_options(vlc.MediaParseFlag.local, 0)
         events = self.media.event_manager()
         events.event_attach(vlc.EventType.MediaParsedChanged, self.on_media_parsed)
+
         self.player.set_media(self.media)
         self.player.video_set_scale(0)
-
         if sys.platform == "linux":
             self.root.update_idletasks()
             x_window_id = self.video_frame.winfo_id()
@@ -643,7 +652,6 @@ class VideoPlayer:
     def _start_player(self):
         time.sleep(0.5)
         print(f"[START_PLAYER] Estado de subtítulos antes: {self.player.video_get_spu()}")
-        # Desactivar subtítulos al inicio
         self.player.video_set_spu(-1)
         print(f"[START_PLAYER] Estado de subtítulos después de desactivar: {self.player.video_get_spu()}")
         print(f"Estado inicial del reproductor: {self.player.get_state()}")
