@@ -52,7 +52,7 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-- En windows no creo sea necesario crear un entorno virtual simplemente instale las dependencias
+- **En entornos Windows, puede omitir la creación de un entorno virtual e instalar directamente las dependencias necesarias.**
 ```bash
 pip install -r requirements.txt
 ```
