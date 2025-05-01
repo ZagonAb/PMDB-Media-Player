@@ -53,6 +53,32 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 - **En entornos Windows, puede omitir la creación de un entorno virtual e instalar directamente las dependencias necesarias.**
+- **"Asegúrese de que la ruta de instalación de VLC esté incluida en la variable de entorno `PATH` de Windows."**
+
+### 🧪 Agregar VLC al `PATH` usando `cmd` (como administrador)
+
+1. **Abre `cmd` como administrador**  
+
+2. **Ejecuta el siguiente comando**  
+   Sustituye la ruta si VLC está en otro lugar:
+
+```cmd
+setx /M PATH "%PATH%;C:\Program Files\VideoLAN\VLC"
+```
+
+> ⚠️ Nota:
+> - `/M` modifica el `PATH` **del sistema** (no solo el del usuario).
+> - Asegúrate de que la ruta `C:\Program Files\VideoLAN\VLC` es la correcta.
+
+3. **Verifica que funciona**  
+   Escribe en la terminal:
+```cmd
+vlc --version
+```
+   Deberías ver la versión de VLC.
+---
+- Instala las dependencias en windows.
+
 ```bash
 pip install -r requirements.txt
 ```
