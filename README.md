@@ -136,7 +136,6 @@ El reproductor guarda automáticamente la última posición de reproducción en:
 | Linux | `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json` |
 | Linux (Flatpak) | `~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json` |
 | Windows | `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json` |
-| macOS | `~/Library/Preferences/pegasus-frontend/themes/PMDB-Theme/database.json` |
 
 ## Personalización
 
