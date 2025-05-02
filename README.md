@@ -112,7 +112,7 @@ python build.py
 El ejecutable se generará en `dist/PMDB_Media_Player`
 
 ### Nota
-- **Windows**: **No es requerido empaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
+- **Windows**: **No es requerido empaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `python path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
 
 ## Atajos de teclado
 
