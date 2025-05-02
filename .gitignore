@@ -1,7 +1,0 @@
-.venv/
-PMDB_MP.egg-info/
-PMDB_MP/__pycache__/
-build/
-dist/
-PMDB_Media_Player.spec
-
