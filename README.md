@@ -52,7 +52,7 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-- **En entornos Windows, puede omitir la creación de un entorno virtual e instalar directamente las dependencias necesarias.**
+- **En Windows, puede omitir la creación de un entorno virtual e instalar directamente las dependencias necesarias.**
 - **"Asegúrese de que la ruta de instalación de VLC esté incluida en la variable de entorno `PATH` de Windows."**
 
 ### 🧪 Agregar VLC al `PATH` usando `cmd` (como administrador)
