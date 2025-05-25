@@ -136,11 +136,11 @@ class GamepadController:
 
             if not has_external_sub and not has_embedded_subs:
                 self.debug_log("No hay subtítulos disponibles")
-                self.player.root.after(0, lambda: self._show_notification("No hay subtítulos", False))
+                self.player.root.after(0, lambda: self._show_notification("There are no subtitles", False))
                 return
 
             current_spu = self.player.player.video_get_spu()
-            message = "Subtítulos: Sin cambios"
+            message = "Subtitles: No changes"
 
             if current_spu == -1:
                 if has_external_sub:
@@ -149,16 +149,16 @@ class GamepadController:
                         self.player.player.video_set_spu(0)
                         self.player.subtitle_enabled = True
                         self.player.current_embedded_sub = -1
-                        message = "Subtítulo: Externo activado"
+                        message = "Subtitle: External activated"
                     except Exception as e:
-                        message = "Error: Subtítulo externo"
+                        message = "Error: External subtitle"
                 elif has_embedded_subs:
                     first_sub = self.player.embedded_subtitles[0]
                     self.player.player.video_set_spu(first_sub["id"])
                     self.player.subtitle_enabled = True
                     self.player.current_embedded_sub = first_sub["id"]
                     sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
-                    message = f"Subtítulo: {sub_name}"
+                    message = f"Subtitle: {sub_name}"
 
             elif current_spu == 0 and has_external_sub and self.player.subtitle_enabled:
                 if has_embedded_subs:
@@ -166,11 +166,11 @@ class GamepadController:
                     self.player.player.video_set_spu(first_sub["id"])
                     self.player.current_embedded_sub = first_sub["id"]
                     sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
-                    message = f"Subtítulo: {sub_name}"
+                    message = f"Subtitle: {sub_name}"
                 else:
                     self.player.player.video_set_spu(-1)
                     self.player.subtitle_enabled = False
-                    message = "Subtítulos: OFF"
+                    message = "Subtitles: OFF"
 
             elif has_embedded_subs and current_spu > 0:
                 current_index = next(
@@ -183,18 +183,18 @@ class GamepadController:
                     self.player.player.video_set_spu(-1)
                     self.player.subtitle_enabled = False
                     self.player.current_embedded_sub = -1
-                    message = "Subtítulos: OFF"
+                    message = "Subtitles: OFF"
                 else:
                     next_index = current_index + 1
                     next_sub = self.player.embedded_subtitles[next_index]
                     self.player.player.video_set_spu(next_sub['id'])
                     self.player.current_embedded_sub = next_sub['id']
                     sub_name = next_sub.get('name', next_sub.get('language', f'Pista {next_sub["id"]}'))
-                    message = f"Subtítulo: {sub_name}"
+                    message = f"Subtitle: {sub_name}"
             else:
                 self.player.player.video_set_spu(-1)
                 self.player.subtitle_enabled = False
-                message = "Subtítulos: OFF"
+                message = "Subtitles: OFF"
 
             self.player.root.after(0, lambda: self.player.controls.set_subtitle_state(
                 has_external_sub or has_embedded_subs,
