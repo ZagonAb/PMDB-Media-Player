@@ -15,7 +15,7 @@ from PMDB_MP.locales import get_locale
 import traceback
 import ctypes
 from ctypes.util import find_library
-
+from PMDB_MP.gamepad import GamepadController
 
 class VideoPlayer:
     def __init__(self, video_path, language='es'):
@@ -33,6 +33,8 @@ class VideoPlayer:
         self.root.title(self.locale["player_title"].format(video_name))
         self.root.geometry("800x600")
         self.root.minsize(600,400)
+        self.gamepad = None
+        self.init_gamepad()
         try:
             base_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
             icon_path = os.path.join(base_path, "assets", "icons", "pmdbmp.png")
@@ -45,7 +47,6 @@ class VideoPlayer:
                     self.root.iconphoto(True, icon)
         except Exception as e:
             print(f"No se pudo cargar el icono: {str(e)}")
-
         self.root.update()
         self.controls_visible = True
         self.video_frame = tk.Frame(self.root, bg=self.bg_color2)
@@ -68,12 +69,28 @@ class VideoPlayer:
         print(f"[INIT] ¿Subtítulo encontrado?: {self.subtitle_path is not None}")
         print(f"[INIT] Estado inicial de subtítulo: {self.subtitle_enabled}")
 
+        # Agregar esto después de encontrar el archivo de subtítulos:
         if self.subtitle_path:
-            print(f"[INIT] Intentando cargar pero desactivar subtítulo: {self.subtitle_path}")
-            print(f"[INIT] Estado de subtítulos antes de configurar: {self.player.video_get_spu()}")
-            self.player.video_set_subtitle_file(self.subtitle_path)
-            self.player.video_set_spu(-1)
-            print(f"[INIT] Estado de subtítulos después de configurar: {self.player.video_get_spu()}")
+            print(f"[INIT] Subtítulo externo encontrado: {self.subtitle_path}")
+            try:
+                # Cargar pero no activar el subtítulo externo
+                result = self.player.video_set_subtitle_file(self.subtitle_path)
+                print(f"[INIT] Resultado de cargar subtítulo externo: {result}")
+                self.player.video_set_spu(-1)  # Desactivar inicialmente
+                print(f"[INIT] Subtítulo externo cargado pero desactivado")
+
+                # Asegurar que el estado inicial sea correcto
+                self.subtitle_enabled = False
+
+            except Exception as e:
+                print(f"[INIT] Error al cargar subtítulo externo: {e}")
+                self.subtitle_path = None
+        else:
+            print("[INIT] No se encontró subtítulo externo")
+
+        # Al final del __init__, después de crear los controles:
+        # Actualizar UI inicial para mostrar disponibilidad de subtítulos
+        self._update_subtitle_ui_state()
 
         self.player.video_set_spu(-1)
         self.embedded_subtitles = []
@@ -234,29 +251,72 @@ class VideoPlayer:
                 self.player.set_time(self.saved_position)
                 self.update_ui()
 
-        def close_player(self):
-            try:
-                if hasattr(self, 'player') and self.player:
+    def init_gamepad(self):
+        try:
+            from PMDB_MP.gamepad import GamepadController
+            self.gamepad = GamepadController(self)
+            self.gamepad.start()
+        except Exception as e:
+            print(f"Error inicializando gamepad: {str(e)}")
+
+    def _seek_relative(self, ms):
+        if hasattr(self, 'player') and self.player:
+            current_time = self.player.get_time()
+            new_time = max(0, current_time + ms)
+            self.player.set_time(new_time)
+            self._save_position_after_action()
+
+    def close_player(self):
+        try:
+            if hasattr(self, 'gamepad') and self.gamepad:
+                try:
+                    self.gamepad.stop()
+                except Exception as e:
+                    print(f"Error deteniendo gamepad: {str(e)}")
+
+            if hasattr(self, 'player') and self.player:
+                try:
                     player_state = self.player.get_state()
                     if player_state != vlc.State.Ended:
                         current_pos = self.player.get_time()
                         if current_pos > 0:
                             self.pegasus_utils.save_video_position(self.video_name, current_pos)
                             print(f"Posición final guardada: {current_pos}ms")
+                    else:
+                        print("Video terminado, no se guarda posición")
 
                     self.player.stop()
-                    self.player.release()
                     self.is_playing = False
+                    timeout = time.time() + 0.5
+                    while self.player.get_state() != vlc.State.Stopped and time.time() < timeout:
+                        time.sleep(0.05)
 
-                if hasattr(self, 'instance') and self.instance:
+                    self.player.release()
+                    print("Reproductor VLC liberado correctamente")
+                except Exception as e:
+                    print(f"Error al detener el reproductor VLC: {e}")
+
+            if hasattr(self, 'instance') and self.instance:
+                try:
                     self.instance.release()
+                    print("Instancia VLC liberada correctamente")
+                except Exception as e:
+                    print(f"Error al liberar la instancia VLC: {e}")
 
-            except Exception as e:
-                print(f"Error al cerrar el reproductor: {e}")
+        except Exception as e:
+            print(f"Error inesperado al cerrar el reproductor: {e}")
+            traceback.print_exc()
 
-            if hasattr(self, 'root'):
+        if hasattr(self, 'root'):
+            try:
+                if not self.is_fullscreen:
+                    self.original_geometry = self.root.geometry()
+
                 self.root.quit()
                 self.root.destroy()
+                print("Interfaz gráfica cerrada correctamente")
+            except Exception as e:
+                print(f"Error al cerrar la ventana: {e}")
 
     def _ensure_subtitles_off(self):
         print("[ENSURE_OFF] Comprobando estado de subtítulos")
@@ -269,45 +329,54 @@ class VideoPlayer:
             print(f"[ENSURE_OFF] Nuevo estado: {self.player.video_get_spu()}")
 
     def _find_subtitle_file(self, video_path):
+        """Busca archivo de subtítulos con el mismo nombre que el video"""
         base_path = os.path.splitext(video_path)[0]
         subtitle_extensions = ['.srt', '.sub', '.ass', '.vtt']
 
         for ext in subtitle_extensions:
             subtitle_path = f"{base_path}{ext}"
+            print(f"[FIND_SUB] Buscando: {subtitle_path}")
             if os.path.exists(subtitle_path):
+                print(f"[FIND_SUB] Encontrado: {subtitle_path}")
                 return subtitle_path
+
+        print("[FIND_SUB] No se encontró archivo de subtítulos")
         return None
 
     def _toggle_subtitle(self):
         print(f"[TOGGLE] Estado actual antes de toggle: {self.subtitle_enabled}")
         print(f"[TOGGLE] SPU actual antes de toggle: {self.player.video_get_spu()}")
         print(f"[TOGGLE] Subtítulo embebido actual: {self.current_embedded_sub}")
+        print(f"[TOGGLE] Subtítulo externo disponible: {bool(self.subtitle_path)}")
+
+        # Alternar estado
         self.subtitle_enabled = not self.subtitle_enabled
         print(f"[TOGGLE] Nuevo estado después de toggle: {self.subtitle_enabled}")
 
         if self.subtitle_enabled:
+            # Priorizar subtítulo externo si está disponible
             if self.subtitle_path:
                 print(f"[TOGGLE] Activando subtítulo externo: {self.subtitle_path}")
                 try:
                     result = self.player.video_set_subtitle_file(self.subtitle_path)
                     print(f"[TOGGLE] Resultado de cargar subtítulo externo: {result}")
-                    self.player.video_set_spu(0)
-                    self.current_embedded_sub = -1
+                    self.player.video_set_spu(0)  # Activar pista de subtítulos externa
+                    self.current_embedded_sub = -1  # Marcar que no usa incrustado
                 except Exception as e:
                     print(f"[TOGGLE] Error al cargar subtítulo externo: {e}")
-                    if self.current_embedded_sub != -1:
-                        print("[TOGGLE] Fallback a subtítulo embebido")
-                        self.player.video_set_spu(self.current_embedded_sub)
-
+                    self.subtitle_enabled = False  # Revertir si falla
+            # Si no hay externo, usar incrustado
             elif self.current_embedded_sub != -1:
                 print(f"[TOGGLE] Activando subtítulo embebido ID: {self.current_embedded_sub}")
                 self.player.video_set_spu(self.current_embedded_sub)
-
             elif self.embedded_subtitles:
                 first_sub_id = self.embedded_subtitles[0]["id"]
                 print(f"[TOGGLE] Activando primer subtítulo embebido disponible: {first_sub_id}")
                 self.player.video_set_spu(first_sub_id)
                 self.current_embedded_sub = first_sub_id
+            else:
+                print("[TOGGLE] No hay subtítulos disponibles")
+                self.subtitle_enabled = False
         else:
             print("[TOGGLE] Desactivando todos los subtítulos")
             self.player.video_set_spu(-1)
@@ -316,10 +385,8 @@ class VideoPlayer:
         print(f"[TOGGLE] SPU después de toggle: {final_spu}")
         print(f"[TOGGLE] Estado final subtítulos: {'ACTIVO' if final_spu != -1 else 'INACTIVO'}")
 
-        self.controls.set_subtitle_state(
-            available=(bool(self.subtitle_path) or bool(self.embedded_subtitles)),
-            enabled=self.subtitle_enabled
-        )
+        # Actualizar UI
+        self._update_subtitle_ui_state()
 
     def _increase_volume(self):
         current_vol = self.player.audio_get_volume()
@@ -685,21 +752,129 @@ class VideoPlayer:
             while not self.player.is_playing() and time.time() < timeout:
                 time.sleep(0.1)
             track_list = self.player.video_get_spu_description()
-            print(f"[SUBTITLE_DETECT] Raw tracks: {track_list}")
+            print(f"[SUBTITLE_DETECT] Pistas detectadas: {track_list}")
 
-            if track_list:
-                self.embedded_subtitles = [
-                    {"id": track[0], "name": track[1].decode('utf-8') if isinstance(track[1], bytes) else track[1]}
-                    for track in track_list if track[0] != -1
-                ]
-                print(f"[SUBTITLE_DETECT] Subtítulos embebidos encontrados: {self.embedded_subtitles}")
-                self.root.after(0, lambda: self.controls.set_embedded_subtitles_state(bool(self.embedded_subtitles)))
-            else:
-                print("[SUBTITLE_DETECT] No se encontraron subtítulos embebidos")
+            valid_tracks = [track for track in track_list if track[0] != -1] if track_list else []
+
+            if valid_tracks:
                 self.embedded_subtitles = []
+                for track in valid_tracks:
+                    try:
+                        name = track[1].decode('utf-8') if isinstance(track[1], bytes) else str(track[1])
+                        self.embedded_subtitles.append({
+                            'id': track[0],
+                            'name': name,
+                            'language': self._guess_subtitle_language(name)
+                        })
+                    except Exception as e:
+                        print(f"[SUBTITLE] Error procesando pista {track}: {str(e)}")
+
+                print(f"[SUBTITLE] Subtítulos cargados: {len(self.embedded_subtitles)} pistas")
+                print(f"[SUBTITLE] IDs disponibles: {[sub['id'] for sub in self.embedded_subtitles]}")
+
+                self._verify_subtitles_availability()
+            else:
+                print("[SUBTITLE] No se encontraron pistas de subtítulos válidas")
+                self.embedded_subtitles = []
+
         except Exception as e:
-            print(f"[SUBTITLE_DETECT] Error detectando subtítulos embebidos: {str(e)}")
+            print(f"[SUBTITLE] Error en detección: {str(e)}")
+            traceback.print_exc()
             self.embedded_subtitles = []
+        self.root.after(0, self._update_subtitle_ui_state)
+
+
+    def _verify_subtitles_availability(self):
+
+        if not hasattr(self, 'embedded_subtitles'):
+            return False
+
+        for sub in self.embedded_subtitles[:]:
+            try:
+                self.player.video_set_spu(sub['id'])
+                actual_spu = self.player.video_get_spu()
+                if actual_spu != sub['id']:
+                    print(f"[SUBTITLE] Pista {sub['id']} no accesible, removiendo")
+                    self.embedded_subtitles.remove(sub)
+            except Exception as e:
+                print(f"[SUBTITLE] Error verificando pista {sub['id']}: {str(e)}")
+                self.embedded_subtitles.remove(sub)
+        self.player.video_set_spu(-1)
+        return bool(self.embedded_subtitles)
+
+    def _update_subtitle_ui_state(self):
+        has_embedded_subtitles = bool(getattr(self, 'embedded_subtitles', []))
+        has_external_subtitle = bool(getattr(self, 'subtitle_path', None))
+        has_any_subtitles = has_external_subtitle or has_embedded_subtitles
+
+        current_spu = self.player.video_get_spu()
+        subtitle_enabled = current_spu != -1 or (current_spu == 0 and has_external_subtitle and self.subtitle_enabled)
+
+        print(f"[UI_UPDATE] Subtítulos externos: {has_external_subtitle}")
+        print(f"[UI_UPDATE] Subtítulos incrustados: {has_embedded_subtitles}")
+        print(f"[UI_UPDATE] SPU actual: {current_spu}")
+        print(f"[UI_UPDATE] Estado final: disponible={has_any_subtitles}, activo={subtitle_enabled}")
+
+        if hasattr(self, 'controls'):
+            self.controls.set_embedded_subtitles_state(available=has_embedded_subtitles)
+            self.controls.set_subtitle_state(
+                available=has_any_subtitles,
+                enabled=subtitle_enabled
+            )
+
+    def _guess_subtitle_language(self, track_name):
+        if not track_name:
+            return "Desconocido"
+
+        if hasattr(self, 'embedded_subtitles'):
+            for sub in self.embedded_subtitles:
+                if sub.get('name') == track_name and sub.get('language'):
+                    return sub['language']
+
+        return "Español"
+
+    def _detect_embedded_subtitles(self):
+        try:
+            timeout = time.time() + 5
+            while not self.player.is_playing() and time.time() < timeout:
+                time.sleep(0.1)
+
+            track_list = self.player.video_get_spu_description()
+            print(f"[SUBTITLE_DETECT] Pistas detectadas: {track_list}")
+
+            valid_tracks = [track for track in track_list if track[0] != -1] if track_list else []
+
+            if valid_tracks:
+                self.embedded_subtitles = []
+                for track in valid_tracks:
+                    try:
+                        name = track[1].decode('utf-8') if isinstance(track[1], bytes) else str(track[1])
+                        lang = self._guess_subtitle_language(name)
+
+                        self.embedded_subtitles.append({
+                            'id': track[0],
+                            'name': name,
+                            'language': lang
+                        })
+
+                        print(f"[SUBTITLE] Pista {track[0]} - Nombre: '{name}' - Idioma detectado: '{lang}'")
+                    except Exception as e:
+                        print(f"[SUBTITLE] Error procesando pista {track}: {str(e)}")
+
+                print(f"[SUBTITLE] Subtítulos cargados: {len(self.embedded_subtitles)} pistas")
+                print(f"[SUBTITLE] IDs disponibles: {[sub['id'] for sub in self.embedded_subtitles]}")
+
+                self._verify_subtitles_availability()
+            else:
+                print("[SUBTITLE] No se encontraron pistas de subtítulos válidas")
+                self.embedded_subtitles = []
+
+        except Exception as e:
+            print(f"[SUBTITLE] Error en detección: {str(e)}")
+            traceback.print_exc()
+            self.embedded_subtitles = []
+
+        self.root.after(0, self._update_subtitle_ui_state)
 
     def _show_subtitle_menu(self):
         if not hasattr(self, '_subtitle_menu'):
@@ -817,6 +992,12 @@ class VideoPlayer:
         if hasattr(self, 'root'):
             self.root.quit()
             self.root.destroy()
+
+        if hasattr(self, 'gamepad') and self.gamepad:
+            try:
+                self.gamepad.stop()
+            except Exception as e:
+                print(f"Error deteniendo gamepad: {str(e)}")
 
     def run(self):
         self.root.mainloop()

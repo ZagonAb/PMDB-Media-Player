@@ -14,6 +14,7 @@ Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter,
 - ✔️ Funcionalidad de pantalla completa
 - ✔️ Guardado automático de posición de reproducción
 - ✔️ Atajos de teclado para controles rápidos
+- ✔️ **Soporte para gamepads/joysticks (Windows y Linux)**
 - ✔️ Interfaz en español e inglés
 - ✔️ Integración con la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
 
@@ -31,6 +32,7 @@ sudo apt-get install -y python3-dev python3-pip libvlc-dev vlc libx11-dev libgtk
 #### Windows
 - Instalar [VLC media player (64-bit)](https://www.videolan.org/)
 - Instalar [Python 3.8+](https://www.python.org/)
+- Instalar [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) (requerido por Pygame)
 
 ## Instalación
 
@@ -114,18 +116,34 @@ El ejecutable se generará en `dist/PMDB_Media_Player`
 ### Nota
 - **Windows**: **No es requerido empaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `python path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
 
-## Atajos de teclado
+### Requisitos para gamepads
+- En Linux, la mayoría de los gamepads funcionarán inmediatamente
+- En Windows, se recomienda usar gamepads compatibles con XInput (como controles de Xbox)
+- Para gamepads genéricos en Windows, puedes necesitar [x360ce](https://www.x360ce.com/) para emular un control de Xbox
 
-| Tecla               | Función                          |
-|---------------------|----------------------------------|
-| Espacio             | Play/Pause                       |
-| Flecha izquierda    | Retroceder 10 segundos           |
-| Flecha derecha      | Avanzar 10 segundos              |
-| Flecha arriba       | Aumentar volumen                 |
-| Flecha abajo        | Disminuir volumen                |
-| F11                 | Alternar pantalla completa       |
-| Doble clic          | Alternar pantalla completa       |
-| Escape              | Salir de pantalla completa/cerrar|
+
+## Atajos de teclado y controles
+
+| Control               | Función                          |
+|-----------------------|----------------------------------|
+| **Teclado**           |                                  |
+| Espacio               | Play/Pause                       |
+| Flecha izquierda      | Retroceder 10 segundos           |
+| Flecha derecha        | Avanzar 10 segundos              |
+| Flecha arriba         | Aumentar volumen                 |
+| Flecha abajo          | Disminuir volumen                |
+| F11                   | Alternar pantalla completa       |
+| Doble clic            | Alternar pantalla completa       |
+| Escape                | Salir de pantalla completa/cerrar|
+| **Gamepad**           |                                  |
+| Botón A (1)           | Play/Pausa                       |
+| Botón B (2)           | Alternar subtítulos              |
+| Botón X (3)           | Pantalla completa                |
+| Botón Y (4)           | Cerrar reproductor               |
+| D-Pad Arriba          | Aumentar volumen                 |
+| D-Pad Abajo           | Disminuir volumen                |
+| D-Pad Izquierda       | Retroceder 10 segundos           |
+| D-Pad Derecha         | Avanzar 10 segundos              |
 
 ## Configuración avanzada
 
