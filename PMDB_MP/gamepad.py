@@ -7,30 +7,27 @@ import customtkinter as ctk
 import pygame
 
 class GamepadController:
-    # Mapeo de botones a funciones (similar al original)
+
     BUTTON_MAP = {
-        0: 'primary',      # A (Botón 1)
-        1: 'secondary',    # B (Botón 2)
-        2: 'tertiary',     # X (Botón 3)
-        3: 'quaternary',   # Y (Botón 4)
-        # Los demás botones no se mapean
+        0: 'primary',
+        1: 'secondary',
+        2: 'tertiary',
+        3: 'quaternary',
     }
 
-    # Mapeo de la cruceta (HAT) - Corregido para coincidir con ACTION_MAP
     HAT_MAP = {
-        (0, 1): 'vol_up',       # Arriba -> Volumen +
-        (0, -1): 'vol_down',    # Abajo -> Volumen -
-        (-1, 0): 'rewind_10s',  # Izquierda -> Retroceder 10s
-        (1, 0): 'forward_10s',  # Derecha -> Adelantar 10s
-        (0, 0): None,          # Centro - sin acción
+        (0, 1): 'vol_up',
+        (0, -1): 'vol_down',
+        (-1, 0): 'rewind_10s',
+        (1, 0): 'forward_10s',
+        (0, 0): None,
     }
 
-    # Acciones actualizadas - Solo botones
     ACTION_MAP = {
-        'primary': 'play_pause',      # A
-        'secondary': 'toggle_subtitle', # B
-        'tertiary': 'fullscreen',     # X
-        'quaternary': 'close',        # Y
+        'primary': 'play_pause',
+        'secondary': 'toggle_subtitle',
+        'tertiary': 'fullscreen',
+        'quaternary': 'close',
     }
 
     def __init__(self, player):
@@ -49,12 +46,10 @@ class GamepadController:
         self.notification = None
         self.notification_id = None
         self.notification_timeout = 3000
-
-        # Para evitar eventos repetidos - especialmente importante para la cruceta
         self.axis_deadzone = 0.5
         self.last_axis_values = {}
-        self.button_repeat_delay = 0.2  # Reducido para mejor respuesta de la cruceta
-        self.last_hat_value = (0, 0)   # Para evitar repetición de eventos de cruceta
+        self.button_repeat_delay = 0.2
+        self.last_hat_value = (0, 0)
 
     def debug_log(self, message):
         if self.debug_mode:
@@ -239,7 +234,6 @@ class GamepadController:
 
     def _listen(self):
         while self.running:
-            # Buscar gamepad si no hay uno activo
             if not self.active:
                 pygame.joystick.quit()
                 pygame.joystick.init()
@@ -251,7 +245,6 @@ class GamepadController:
                     self.current_device_name = self.joystick.get_name()
                     self.active = True
                     self.debug_log(f"Gamepad conectado: {self.current_device_name}")
-                    # Debug info sobre el gamepad
                     self.debug_log(f"Número de hats: {self.joystick.get_numhats()}")
                     self.debug_log(f"Número de botones: {self.joystick.get_numbuttons()}")
                     self.player.root.after(0, lambda: self._show_notification(f"Gamepad conectado: {self.current_device_name}", True))
@@ -259,7 +252,6 @@ class GamepadController:
                     time.sleep(2)
                     continue
 
-            # Procesar eventos
             for event in pygame.event.get():
                 if not self.running:
                     break
@@ -272,9 +264,7 @@ class GamepadController:
         try:
             current_time = time.time()
 
-            # Solo procesamos botones del lado derecho
             if event.type == pygame.JOYBUTTONDOWN:
-                # Control de repetición para botones
                 if current_time - self.last_event_time < self.button_repeat_delay:
                     return
 
@@ -286,12 +276,9 @@ class GamepadController:
                         self.player.root.after(0, self._get_action_handler(action_name))
                         self.last_event_time = current_time
 
-            # Procesamos la cruceta (HAT) - CORREGIDO
             elif event.type == pygame.JOYHATMOTION:
                 self.debug_log(f"HAT evento detectado: {event.value}")
 
-                # Solo procesar cuando se presiona (no cuando se suelta)
-                # Y evitar repetición con delay
                 if (event.value != (0, 0) and
                     event.value != self.last_hat_value and
                     current_time - self.last_event_time > self.button_repeat_delay):
@@ -316,8 +303,6 @@ class GamepadController:
                         self.debug_log(f"ERROR: Valor HAT {event.value} no está en HAT_MAP")
 
                 self.last_hat_value = event.value
-
-            # Ignoramos completamente los ejes analógicos y otros eventos
             elif event.type in [pygame.JOYAXISMOTION, pygame.JOYBUTTONUP]:
                 pass
 
@@ -326,7 +311,6 @@ class GamepadController:
             traceback.print_exc()
 
     def _get_axis_action(self, axis_function, direction):
-        """Mapea acciones para joysticks analógicos (no se usa actualmente)"""
         axis_actions = {
             'stick_left_x': {'negative': 'rewind_10s', 'positive': 'forward_10s'},
             'stick_left_y': {'negative': 'vol_up', 'positive': 'vol_down'},
