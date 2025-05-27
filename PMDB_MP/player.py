@@ -329,7 +329,6 @@ class VideoPlayer:
             print(f"[ENSURE_OFF] Nuevo estado: {self.player.video_get_spu()}")
 
     def _find_subtitle_file(self, video_path):
-        """Busca archivo de subtítulos con el mismo nombre que el video"""
         base_path = os.path.splitext(video_path)[0]
         subtitle_extensions = ['.srt', '.sub', '.ass', '.vtt']
 
@@ -349,23 +348,21 @@ class VideoPlayer:
         print(f"[TOGGLE] Subtítulo embebido actual: {self.current_embedded_sub}")
         print(f"[TOGGLE] Subtítulo externo disponible: {bool(self.subtitle_path)}")
 
-        # Alternar estado
         self.subtitle_enabled = not self.subtitle_enabled
         print(f"[TOGGLE] Nuevo estado después de toggle: {self.subtitle_enabled}")
 
         if self.subtitle_enabled:
-            # Priorizar subtítulo externo si está disponible
             if self.subtitle_path:
                 print(f"[TOGGLE] Activando subtítulo externo: {self.subtitle_path}")
                 try:
                     result = self.player.video_set_subtitle_file(self.subtitle_path)
                     print(f"[TOGGLE] Resultado de cargar subtítulo externo: {result}")
-                    self.player.video_set_spu(0)  # Activar pista de subtítulos externa
-                    self.current_embedded_sub = -1  # Marcar que no usa incrustado
+                    self.player.video_set_spu(0)
+                    self.current_embedded_sub = -1
                 except Exception as e:
                     print(f"[TOGGLE] Error al cargar subtítulo externo: {e}")
-                    self.subtitle_enabled = False  # Revertir si falla
-            # Si no hay externo, usar incrustado
+                    self.subtitle_enabled = False
+
             elif self.current_embedded_sub != -1:
                 print(f"[TOGGLE] Activando subtítulo embebido ID: {self.current_embedded_sub}")
                 self.player.video_set_spu(self.current_embedded_sub)
@@ -385,7 +382,6 @@ class VideoPlayer:
         print(f"[TOGGLE] SPU después de toggle: {final_spu}")
         print(f"[TOGGLE] Estado final subtítulos: {'ACTIVO' if final_spu != -1 else 'INACTIVO'}")
 
-        # Actualizar UI
         self._update_subtitle_ui_state()
 
     def _increase_volume(self):

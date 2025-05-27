@@ -149,11 +149,6 @@ class PlayerControls(ctk.CTkFrame):
         self.is_fullscreen = False
 
     def set_embedded_subtitles_state(self, available, enabled=None):
-        """
-        Actualiza el estado del botón de subtítulos incrustados
-        :param available: True si hay subtítulos disponibles
-        :param enabled: True si los subtítulos están activados (opcional)
-        """
         self.embedded_subtitles_available = available
         state = "normal" if available else "disabled"
 
@@ -162,7 +157,6 @@ class PlayerControls(ctk.CTkFrame):
 
         self.embedded_sub_button.configure(state=state)
 
-        # Solo actualiza el estado si se proporciona el parámetro enabled
         if enabled is not None:
             self.subtitle_enabled = enabled
             self._update_subtitle_button()
@@ -170,7 +164,6 @@ class PlayerControls(ctk.CTkFrame):
         print(f"[SUBTITLE_BUTTON] Estado actualizado - Disponible: {available}, Activado: {enabled}")
 
     def _update_subtitle_button(self):
-        """Actualiza la apariencia del botón de subtítulos según su estado"""
         if self.subtitle_available:
             icon = self.subtitle_on_icon if self.subtitle_enabled else self.subtitle_off_icon
             text = "" if icon else (self.locale["subtitle_on"] if self.subtitle_enabled else self.locale["subtitle_off"])

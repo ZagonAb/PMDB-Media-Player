@@ -51,19 +51,18 @@ class GamepadController:
         self.button_repeat_delay = 0.2
         self.last_hat_value = (0, 0)
 
+        self.notification_position = "bottom_left"
+        self.notification_duration = 1000
+
     def debug_log(self, message):
         if self.debug_mode:
             print(f"🕹️ [Gamepad] {message}")
 
     def _show_notification(self, message, is_success=True):
-        current_time = time.time()
-        if current_time - self.last_notification_time < 1.0:
-            return
-
-        self.last_notification_time = current_time
         self._hide_notification()
 
         fg_color = "#2AA876" if is_success else "#E74C3C"
+        text_color = "white"
 
         self.notification = ctk.CTkFrame(
             self.player.root,
@@ -73,20 +72,41 @@ class GamepadController:
             border_color="#FFFFFF"
         )
 
-        label = ctk.CTkLabel(
+        self.notification_label = ctk.CTkLabel(
             self.notification,
             text=message,
-            text_color="white",
+            text_color=text_color,
             font=("Arial", 12, "bold")
         )
-        label.pack(padx=20, pady=10)
+        self.notification_label.pack(padx=20, pady=10)
 
-        self.notification.place(relx=1.0, rely=1.0, anchor="se", x=-10, y=-80)
+        self.notification.place(
+            relx=1.0,
+            rely=1.0,
+            anchor="se",
+            x=-10,
+            y=-80
+        )
 
         self.notification_id = self.player.root.after(
             self.notification_timeout,
             self._hide_notification
         )
+
+    def _update_notification(self, message, is_success=True):
+        if hasattr(self, 'notification') and self.notification and self.notification.winfo_exists():
+            fg_color = "#2AA876" if is_success else "#E74C3C"
+            self.notification.configure(fg_color=fg_color)
+            self.notification_label.configure(text=message)
+
+            if hasattr(self, 'notification_id') and self.notification_id:
+                self.player.root.after_cancel(self.notification_id)
+            self.notification_id = self.player.root.after(
+                self.notification_timeout,
+                self._hide_notification
+            )
+        else:
+            self._show_notification(message, is_success)
 
     def _hide_notification(self):
         if self.notification:
@@ -98,18 +118,54 @@ class GamepadController:
 
     def _get_action_handler(self, action_name):
         handlers = {
-            'play_pause': self.player.toggle_play_pause,
+            'play_pause': self._handle_play_pause,
             'toggle_subtitle': self._cycle_subtitles,
-            'fullscreen': self.player._toggle_fullscreen,
+            'fullscreen': self._handle_fullscreen,
             'close': self.player.close_player,
-            'rewind_10s': getattr(self.player, '_rewind_10s', lambda: self._seek_relative(-10000)),
-            'forward_10s': getattr(self.player, '_forward_10s', lambda: self._seek_relative(10000)),
-            'vol_up': lambda: self._adjust_volume(10),
-            'vol_down': lambda: self._adjust_volume(-10)
+            'rewind_10s': self._handle_rewind,
+            'forward_10s': self._handle_forward,
+            'vol_up': self._handle_volume_up,
+            'vol_down': self._handle_volume_down
         }
-        handler = handlers.get(action_name)
+        return handlers.get(action_name)
         self.debug_log(f"Handler para '{action_name}': {handler}")
         return handler
+
+    def _handle_play_pause(self):
+        self.player.toggle_play_pause()
+        state = "PAUSADO" if not self.player.is_playing else "REPRODUCIENDO"
+        self._show_notification(f"Reproducción: {state}")
+
+    def _handle_fullscreen(self):
+        self.player._toggle_fullscreen()
+        state = "Pantalla Completa" if self.player.is_fullscreen else "Ventana"
+        self._show_notification(f"Modo: {state}")
+
+    def _handle_volume_up(self):
+        current_vol = self.player.player.audio_get_volume()
+        new_vol = min(100, current_vol + 5)
+        self.player._on_volume_change(new_vol)
+        self.player.controls.volume_slider.set(new_vol)
+        self._update_notification(f"Volumen: {new_vol}%")
+
+    def _handle_volume_down(self):
+        current_vol = self.player.player.audio_get_volume()
+        new_vol = max(0, current_vol - 5)
+        self.player._on_volume_change(new_vol)
+        self.player.controls.volume_slider.set(new_vol)
+        self._update_notification(f"Volumen: {new_vol}%")
+
+    def _handle_rewind(self):
+        self._seek_relative(-10000)
+        current_time = self.player.player.get_time() / 1000
+        mins, secs = divmod(int(current_time), 60)
+        self._update_notification(f"Retrocedido a {mins:02d}:{secs:02d}")
+
+    def _handle_forward(self):
+        self._seek_relative(10000)
+        current_time = self.player.player.get_time() / 1000
+        mins, secs = divmod(int(current_time), 60)
+        self._update_notification(f"Adelantado a {mins:02d}:{secs:02d}")
 
     def _seek_relative(self, ms):
         try:
@@ -131,11 +187,11 @@ class GamepadController:
 
             if not has_external_sub and not has_embedded_subs:
                 self.debug_log("No hay subtítulos disponibles")
-                self.player.root.after(0, lambda: self._show_notification("There are no subtitles", False))
+                self.player.root.after(0, lambda: self._show_notification("No hay subtítulos disponibles", False))
                 return
 
             current_spu = self.player.player.video_get_spu()
-            message = "Subtitles: No changes"
+            message = "Subtítulos: "
 
             if current_spu == -1:
                 if has_external_sub:
@@ -144,28 +200,37 @@ class GamepadController:
                         self.player.player.video_set_spu(0)
                         self.player.subtitle_enabled = True
                         self.player.current_embedded_sub = -1
-                        message = "Subtitle: External activated"
+                        message += "Externos ACTIVADOS"
                     except Exception as e:
-                        message = "Error: External subtitle"
+                        message += "Error activando externos"
+                        self.debug_log(f"Error cargando subtítulo externo: {e}")
                 elif has_embedded_subs:
                     first_sub = self.player.embedded_subtitles[0]
-                    self.player.player.video_set_spu(first_sub["id"])
-                    self.player.subtitle_enabled = True
-                    self.player.current_embedded_sub = first_sub["id"]
-                    sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
-                    message = f"Subtitle: {sub_name}"
+                    try:
+                        self.player.player.video_set_spu(first_sub["id"])
+                        self.player.subtitle_enabled = True
+                        self.player.current_embedded_sub = first_sub["id"]
+                        sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
+                        message += f"{sub_name}"
+                    except Exception as e:
+                        message += "Error activando incrustados"
+                        self.debug_log(f"Error activando subtítulo incrustado: {e}")
 
             elif current_spu == 0 and has_external_sub and self.player.subtitle_enabled:
                 if has_embedded_subs:
                     first_sub = self.player.embedded_subtitles[0]
-                    self.player.player.video_set_spu(first_sub["id"])
-                    self.player.current_embedded_sub = first_sub["id"]
-                    sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
-                    message = f"Subtitle: {sub_name}"
+                    try:
+                        self.player.player.video_set_spu(first_sub["id"])
+                        self.player.current_embedded_sub = first_sub["id"]
+                        sub_name = first_sub.get('name', first_sub.get('language', f'Pista {first_sub["id"]}'))
+                        message += f"{sub_name}"
+                    except Exception as e:
+                        message += "Error cambiando a incrustados"
+                        self.debug_log(f"Error cambiando a subtítulo incrustado: {e}")
                 else:
                     self.player.player.video_set_spu(-1)
                     self.player.subtitle_enabled = False
-                    message = "Subtitles: OFF"
+                    message += "DESACTIVADOS"
 
             elif has_embedded_subs and current_spu > 0:
                 current_index = next(
@@ -178,25 +243,28 @@ class GamepadController:
                     self.player.player.video_set_spu(-1)
                     self.player.subtitle_enabled = False
                     self.player.current_embedded_sub = -1
-                    message = "Subtitles: OFF"
+                    message += "DESACTIVADOS"
                 else:
                     next_index = current_index + 1
                     next_sub = self.player.embedded_subtitles[next_index]
-                    self.player.player.video_set_spu(next_sub['id'])
-                    self.player.current_embedded_sub = next_sub['id']
-                    sub_name = next_sub.get('name', next_sub.get('language', f'Pista {next_sub["id"]}'))
-                    message = f"Subtitle: {sub_name}"
+                    try:
+                        self.player.player.video_set_spu(next_sub['id'])
+                        self.player.current_embedded_sub = next_sub['id']
+                        sub_name = next_sub.get('name', next_sub.get('language', f'Pista {next_sub["id"]}'))
+                        message += f"{sub_name}"
+                    except Exception as e:
+                        message += "Error cambiando pista"
+                        self.debug_log(f"Error cambiando a siguiente subtítulo: {e}")
             else:
                 self.player.player.video_set_spu(-1)
                 self.player.subtitle_enabled = False
-                message = "Subtitles: OFF"
+                message += "DESACTIVADOS"
 
+            is_success = not message.endswith("Error") and not message.endswith("DESACTIVADOS")
             self.player.root.after(0, lambda: self.player.controls.set_subtitle_state(
                 has_external_sub or has_embedded_subs,
                 self.player.subtitle_enabled
             ))
-
-            is_success = not message.endswith("OFF")
             self.debug_log(message)
             self.player.root.after(0, lambda: self._show_notification(message, is_success))
 
