@@ -178,3 +178,11 @@ Este proyecto está licenciado bajo los términos de la [![License: GPL v3](http
 
 ---
 **Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
+
+----
+
+### 💖 DONATE
+I'm a programming enthusiast and passionate about free software, with a special love for classic games and the retro community. All my themes and projects are open-source and available for anyone to use. If you'd like to show your support or help me continue creating and improving these projects, you can make a voluntary donation. Every contribution, no matter how small, allows me to continue improving and maintaining these projects. 👾
+
+[![Support on PayPal](https://img.shields.io/badge/PayPal-0070ba?style=for-the-badge)](https://paypal.me/ZagonAb)
+[![Donate using Liberapay](https://liberapay.com/assets/widgets/donate.svg)](https://liberapay.com/Gonzalo/donate)
