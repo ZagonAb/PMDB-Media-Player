@@ -1,185 +1,245 @@
 # PMDB Media Player
 
-Un reproductor multimedia avanzado desarrollado con Python, VLC y CustomTkinter, diseñado exclusivamente para la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
+**PMDB Media Player** is an advanced media player built with **Python**, **VLC**, and **CustomTkinter**, specifically designed to integrate seamlessly with the [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) interface.
 
-![Modo ventana](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
-![Pantalla completa](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen1.png)
+It provides a lightweight yet powerful playback experience focused on local media libraries and controller-friendly navigation.
 
-## Características principales
+![Window mode](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen.png)
+![Fullscreen mode](https://github.com/ZagonAb/PMDB-Media-Player/blob/1ce3b7a661f3fd3d872408b2826129e12b2e08ba/.meta/screenshots/screen1.png)
 
-- ✔️ Reproducción de videos con soporte para múltiples formatos
-- ✔️ Interfaz moderna y personalizable con CustomTkinter
-- ✔️ Soporte para subtítulos (externos y embebidos)
-- ✔️ Control de volumen y mute
-- ✔️ Funcionalidad de pantalla completa
-- ✔️ Guardado automático de posición de reproducción
-- ✔️ Atajos de teclado para controles rápidos
-- ✔️ **Soporte para gamepads/joysticks (Windows y Linux)**
-- ✔️ Interfaz en español e inglés
-- ✔️ Integración con la interfaz [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme)
+---
 
-## Requisitos del sistema
+## Features
 
-### Dependencias comunes
-- Python 3.8 o superior
-- VLC media player instalado en el sistema
+* Multi-format video playback powered by VLC
+* Modern and customizable UI built with CustomTkinter
+* External and embedded subtitle support
+* Volume control and mute functionality
+* Fullscreen playback mode
+* Automatic playback position saving
+* Keyboard shortcuts for fast interaction
+* **Gamepad / joystick support (Linux & Windows)**
+* Bilingual interface (Spanish / English)
+* Native integration with **PMDB-Theme**
 
-#### Linux (Debian/Ubuntu)
+---
+
+## System Requirements
+
+### Common Requirements
+
+* Python **3.8+**
+* VLC Media Player installed on the system
+
+---
+
+### Linux (Debian / Ubuntu)
+
 ```bash
 sudo apt-get install -y python3-dev python3-pip libvlc-dev vlc libx11-dev libgtk-3-dev
 ```
 
-#### Windows
-- Instalar [VLC media player (64-bit)](https://www.videolan.org/)
-- Instalar [Python 3.8+](https://www.python.org/)
-- Instalar [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) (requerido por Pygame)
+---
 
-## Instalación
+### Windows
 
-1. Clona el repositorio:
+Install the following components:
+
+* [VLC Media Player (64-bit)](https://www.videolan.org/)
+* [Python 3.8 or newer](https://www.python.org/)
+* [Microsoft Visual C++ Redistributable](https://aka.ms/vs/17/release/vc_redist.x64.exe) (required by Pygame)
+
+---
+
+## Installation
+
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/ZagonAb/PMDB-Media-Player
 cd PMDB-Media-Player
 ```
 
-2. Crea y activa un entorno virtual de Python (recomendado en **Linux**):
+---
 
-#### Linux
+### 2. Create a virtual environment (recommended on Linux)
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. Instala las dependencias dentro del entorno virtual:
+---
+
+### 3. Install dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
-- **En Windows, puede omitir la creación de un entorno virtual e instalar directamente las dependencias necesarias.**
-- **"Asegúrese de que la ruta de instalación de VLC esté incluida en la variable de entorno `PATH` de Windows."**
 
-### 🧪 Agregar VLC al `PATH` usando `cmd` (como administrador)
+**Windows users** may install dependencies globally if preferred.
 
-1. **Abre `cmd` como administrador**  
+Make sure the VLC installation directory is available in the Windows `PATH` environment variable.
 
-2. **Ejecuta el siguiente comando**  
-   Sustituye la ruta si VLC está en otro lugar:
+---
+
+### Add VLC to PATH (Windows)
+
+Open **Command Prompt as Administrator** and run:
 
 ```cmd
 setx /M PATH "%PATH%;C:\Program Files\VideoLAN\VLC"
 ```
 
-> ⚠️ Nota:
-> - `/M` modifica el `PATH` **del sistema** (no solo el del usuario).
-> - Asegúrate de que la ruta `C:\Program Files\VideoLAN\VLC` es la correcta.
+> Notes:
+>
+> * `/M` modifies the system PATH.
+> * Restart the terminal after running the command.
 
-3. **Reinicia el terminal o tu sesión**
-   Los cambios no afectan terminales abiertos previamente. Cierra y abre uno nuevo para que el cambio surta efecto.
+Verify installation:
 
-4. **Verifica que funciona**  
-   Escribe en la terminal:
 ```cmd
 vlc --version
 ```
-- Deberías ver la versión de VLC.
+
 ---
-- Instala las dependencias en windows.
+
+## Running the Player
 
 ```bash
-pip install -r requirements.txt
+python main.py /path/to/video.mp4
 ```
 
-4. Ejecuta el reproductor:
+### Available Options
+
+| Option          | Description              |                           |
+| --------------- | ------------------------ | ------------------------- |
+| `--fullscreen`  | Start in fullscreen mode |                           |
+| `--language [es | en]`                     | Select interface language |
+
+Example:
+
 ```bash
-python main.py /ruta/al/video.mp4
+python main.py --language en --fullscreen /path/to/video.mp4
 ```
 
-Opciones disponibles:
-- `--fullscreen`: Inicia en modo pantalla completa
-- `--language [es|en]`: Selecciona el idioma de la interfaz
+---
 
-Ejemplo:
-```bash
-python main.py --language "en" --fullscreen /ruta/al/video.mp4
-```
+## Building a Standalone Executable (Linux)
 
-## Construir ejecutable
+Recommended when using PMDB-Theme integration.
 
-Para crear un ejecutable independiente (recomendado para su uso con [PMDB-Theme](https://github.com/ZagonAb/PMDB-Theme) en **Linux**):
-
-1. Ejecuta el script de construcción:
 ```bash
 python build.py
 ```
 
-El ejecutable se generará en `dist/PMDB_Media_Player`
+Output location:
 
-### Nota
-- **Windows**: **No es requerido empaquetar; puede utilizar la siguiente línea en `metadata.txt`:"** `python path/to/PMDB-Media-Player/main.py --fullscreen {file.path}`
+```
+dist/PMDB_Media_Player
+```
 
-### Requisitos para gamepads
-- En Linux, la mayoría de los gamepads funcionarán inmediatamente
-- En Windows, se recomienda usar gamepads compatibles con XInput (como controles de Xbox)
-- Para gamepads genéricos en Windows, puedes necesitar [x360ce](https://www.x360ce.com/) para emular un control de Xbox
+### Windows Note
 
+Packaging is **not required**. You can directly reference the player in `metadata.txt`:
 
-## Atajos de teclado y controles
-
-| Control               | Función                          |
-|-----------------------|----------------------------------|
-| **Teclado**           |                                  |
-| Espacio               | Play/Pause                       |
-| Flecha izquierda      | Retroceder 10 segundos           |
-| Flecha derecha        | Avanzar 10 segundos              |
-| Flecha arriba         | Aumentar volumen                 |
-| Flecha abajo          | Disminuir volumen                |
-| F11                   | Alternar pantalla completa       |
-| Doble clic            | Alternar pantalla completa       |
-| Escape                | Salir de pantalla completa/cerrar|
-| **Gamepad**           |                                  |
-| Botón A (1)           | Play/Pausa                       |
-| Botón B (2)           | Alternar subtítulos              |
-| Botón X (3)           | Pantalla completa                |
-| Botón Y (4)           | Cerrar reproductor               |
-| D-Pad Arriba          | Aumentar volumen                 |
-| D-Pad Abajo           | Disminuir volumen                |
-| D-Pad Izquierda       | Retroceder 10 segundos           |
-| D-Pad Derecha         | Avanzar 10 segundos              |
-
-## Configuración avanzada
-
-El reproductor guarda automáticamente la última posición de reproducción en:
-
-| Sistema | Ubicación |
-|---------|-----------|
-| Linux | `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json` |
-| Linux (Flatpak) | `~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json` |
-| Windows | `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json` |
-
-## Personalización
-
-### Iconos
-Coloca archivos PNG en `PMDB_MP/assets/icons/` con estos nombres:
-
-| Función | Archivos |
-|---------|----------|
-| Reproducción | `play.png`, `pause.png` |
-| Volumen | `volume.png`, `mute.png` |
-| Pantalla completa | `fullscreen.png`, `no-fullscreen.png` |
-| Navegación | `forward.png`, `backward.png` |
-| Subtítulos | `subtitle-on.png`, `subtitle-off.png`, `embedded-sub.png` |
-
-## Soporte
-
-Si encuentras algún problema, por favor abre un issue en el [repositorio](https://github.com/ZagonAb/PMDB-Media-Player/issues).
-
-## Licencia
-
-Este proyecto está licenciado bajo los términos de la [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) o posterior, en cumplimiento con los requisitos de licencia de python-vlc/VLC.
+```
+python path/to/PMDB-Media-Player/main.py --fullscreen {file.path}
+```
 
 ---
-**Nota**: PMDB Media Player es un proyecto personal sin afiliación oficial con Pegasus Frontend.
 
-----
+## Gamepad Support
+
+* Linux: most controllers work out of the box
+* Windows: XInput-compatible controllers (Xbox controllers recommended)
+* Generic controllers may require [x360ce](https://www.x360ce.com/) for Xbox controller emulation
+
+---
+
+## Controls
+
+### Keyboard
+
+| Key          | Action                         |
+| ------------ | ------------------------------ |
+| Space        | Play / Pause                   |
+| Left Arrow   | Rewind 10 seconds              |
+| Right Arrow  | Forward 10 seconds             |
+| Up Arrow     | Increase volume                |
+| Down Arrow   | Decrease volume                |
+| F11          | Toggle fullscreen              |
+| Double Click | Toggle fullscreen              |
+| Escape       | Exit fullscreen / Close player |
+
+### Gamepad
+
+| Control     | Action             |
+| ----------- | ------------------ |
+| A (1)       | Play / Pause       |
+| B (2)       | Toggle subtitles   |
+| X (3)       | Toggle fullscreen  |
+| Y (4)       | Close player       |
+| D-Pad Up    | Volume up          |
+| D-Pad Down  | Volume down        |
+| D-Pad Left  | Rewind 10 seconds  |
+| D-Pad Right | Forward 10 seconds |
+
+---
+
+## Advanced Configuration
+
+Playback progress is automatically stored at:
+
+| System          | Location                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| Linux           | `~/.config/pegasus-frontend/themes/PMDB-Theme/database.json`                                      |
+| Linux (Flatpak) | `~/.var/app/org.pegasus_frontend.Pegasus/config/pegasus-frontend/themes/PMDB-Theme/database.json` |
+| Windows         | `%LOCALAPPDATA%\pegasus-frontend\themes\PMDB-Theme\database.json`                                 |
+
+---
+
+## Customization
+
+### Icons
+
+Place PNG files inside:
+
+```
+PMDB_MP/assets/icons/
+```
+
+Required filenames:
+
+| Category   | Files                                                     |
+| ---------- | --------------------------------------------------------- |
+| Playback   | `play.png`, `pause.png`                                   |
+| Volume     | `volume.png`, `mute.png`                                  |
+| Fullscreen | `fullscreen.png`, `no-fullscreen.png`                     |
+| Navigation | `forward.png`, `backward.png`                             |
+| Subtitles  | `subtitle-on.png`, `subtitle-off.png`, `embedded-sub.png` |
+
+---
+
+## Support
+
+If you encounter a bug or have a feature request, please open an issue:
+
+[https://github.com/ZagonAb/PMDB-Media-Player/issues](https://github.com/ZagonAb/PMDB-Media-Player/issues)
+
+---
+
+## License
+
+This project is licensed under the **GNU General Public License v3.0 or later**, complying with the licensing requirements of python-vlc/VLC.
+
+---
+
+## Disclaimer
+
+PMDB Media Player is a personal project and is **not officially affiliated** with Pegasus Frontend.
+
+---
 
 ### 💖 DONATE
 I'm a programming enthusiast and passionate about free software, with a special love for classic games and the retro community. All my themes and projects are open-source and available for anyone to use. If you'd like to show your support or help me continue creating and improving these projects, you can make a voluntary donation. Every contribution, no matter how small, allows me to continue improving and maintaining these projects. 👾
